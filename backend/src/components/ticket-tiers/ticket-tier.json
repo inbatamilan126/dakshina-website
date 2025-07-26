@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_ticket_tiers_ticket_tiers",
+  "info": {
+    "displayName": "TicketTier"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "price": {
+      "type": "decimal",
+      "required": true
+    },
+    "capacity": {
+      "type": "integer",
+      "required": false
+    },
+    "tickets_sold": {
+      "type": "integer",
+      "required": true,
+      "default": 0
+    }
+  },
+  "config": {}
+}

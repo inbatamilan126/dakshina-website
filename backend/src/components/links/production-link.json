@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_links_production_links",
+  "info": {
+    "displayName": "ProductionLink"
+  },
+  "options": {},
+  "attributes": {
+    "production": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::production.production"
+    }
+  },
+  "config": {}
+}

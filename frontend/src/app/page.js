@@ -1,103 +1,107 @@
-import Image from "next/image";
+import Image from 'next/image';
+import Link from 'next/link'; // Use Next.js Link for optimized navigation
 
-export default function Home() {
+// This function fetches data with the new nested structure.
+async function getEvents() {
+  try {
+    // This is the correct, deep query to get all the data we need.
+    const res = await fetch('http://localhost:1337/api/events?populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch data from API');
+    const responseData = await res.json();
+    return responseData.data;
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return [];
+  }
+}
+
+// Helper function to format the date
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+// This is our main Homepage component, updated for the new user flow.
+export default async function Home() {
+  const events = await getEvents();
+  const strapiUrl = 'http://localhost:1337';
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="flex min-h-screen flex-col items-center p-8 md:p-24 bg-gray-900 text-white">
+      <h1 className="text-5xl font-serif font-bold mb-12">Upcoming Events</h1>
+      
+      <div className="w-full max-w-4xl space-y-8">
+        {Array.isArray(events) && events.length > 0 ? (
+          events.map((event) => {
+            if (!event.artistic_work || event.artistic_work.length === 0) {
+              return null;
+            }
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            const component = event.artistic_work[0];
+            let artisticWorkData;
+            let linkUrl = '/'; // Default link
+
+            // We determine the correct link based on the component type.
+            if (component.__component === 'links.production-link') {
+              artisticWorkData = component.production;
+              if (artisticWorkData && artisticWorkData.slug) {
+                linkUrl = `/productions/${artisticWorkData.slug}`;
+              }
+            } else if (component.__component === 'links.solo-link') {
+              artisticWorkData = component.solo;
+              if (artisticWorkData && artisticWorkData.slug) {
+                linkUrl = `/solos/${artisticWorkData.slug}`;
+              }
+            }
+
+            if (!artisticWorkData || !artisticWorkData.card_image) {
+              return null;
+            }
+
+            const { title } = artisticWorkData;
+            const imageUrl = strapiUrl + artisticWorkData.card_image.url;
+
+            return (
+              <div key={event.id} className="flex flex-col md:flex-row bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
+                <div className="md:w-1/3 w-full h-64 md:h-auto relative">
+                  <Image
+                    src={imageUrl}
+                    alt={title || 'Event Image'}
+                    layout="fill"
+                    objectFit="cover"
+                  />
+                </div>
+                
+                <div className="md:w-2/3 p-6 flex flex-col justify-between">
+                  <div>
+                    <p className="text-sm text-green-400 font-semibold tracking-wider uppercase">
+                      {formatDate(event.date)}
+                    </p>
+                    <h2 className="text-3xl font-serif font-bold mt-2 mb-4 text-white">
+                      {title}
+                    </h2>
+                  </div>
+                  <div className="mt-4">
+                    {/* --- THE LINK IS NOW CORRECTED FOR THE NEW USER FLOW --- */}
+                    <Link 
+                      href={linkUrl} 
+                      className="inline-block bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-green-700"
+                    >
+                      View Production & Tickets
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p>No events found.</p>
+        )}
+      </div>
+    </main>
   );
 }

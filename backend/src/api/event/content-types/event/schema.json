@@ -1,0 +1,52 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events",
+  "info": {
+    "singularName": "event",
+    "pluralName": "events",
+    "displayName": "Event"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "date": {
+      "type": "datetime",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Public",
+        "Private"
+      ]
+    },
+    "venue": {
+      "type": "string",
+      "required": true
+    },
+    "external_ticket_link": {
+      "type": "string"
+    },
+    "artistic_work": {
+      "type": "dynamiczone",
+      "components": [
+        "links.production-link",
+        "links.solo-link"
+      ],
+      "required": true
+    },
+    "uid": {
+      "type": "uid",
+      "targetField": "venue",
+      "required": true
+    },
+    "ticket_tiers": {
+      "type": "component",
+      "component": "ticket-tiers.ticket-tier",
+      "repeatable": true
+    }
+  }
+}

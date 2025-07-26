@@ -1,0 +1,5 @@
+/**
+ * orders service
+ */
+
+export default () => ({});
