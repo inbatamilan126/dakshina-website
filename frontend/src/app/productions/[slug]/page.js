@@ -28,6 +28,7 @@ export default function ProductionPage({ params }) {
   
   const [selectedTier, setSelectedTier] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
   const strapiUrl = 'http://localhost:1337';
 
@@ -43,7 +44,6 @@ export default function ProductionPage({ params }) {
 
         if (currentProduction) {
           const now = new Date().toISOString();
-          // --- CORRECTED: Added 'populate=ticket_tiers' to the query ---
           const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][populate]=*&populate=ticket_tiers`);
           const eventsData = await eventsRes.json();
           const allUpcomingEvents = eventsData.data || [];
@@ -98,9 +98,10 @@ export default function ProductionPage({ params }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: selectedTier.price * 100,
+          amount: selectedTier.price * quantity * 100,
           eventIdentifier: selectedEvent.uid,
           tierName: selectedTier.name,
+          quantity: quantity,
         }),
       });
 
@@ -114,7 +115,7 @@ export default function ProductionPage({ params }) {
         amount: orderDetails.amount,
         currency: "INR",
         name: "Dakshina Dance Company",
-        description: `Ticket: ${selectedTier.name} for ${production.title}`,
+        description: `${quantity} x Ticket(s): ${selectedTier.name} for ${production.title}`,
         image: "https://placehold.co/100x100/16a34a/white?text=D",
         order_id: orderDetails.id,
         
@@ -142,6 +143,7 @@ export default function ProductionPage({ params }) {
         notes: { 
           eventCode: selectedEvent.uid,
           tierName: selectedTier.name,
+          quantity: quantity,
         },
         theme: { color: "#16a34a" }
       };
@@ -196,28 +198,44 @@ export default function ProductionPage({ params }) {
                   <div className="bg-gray-700 p-4 rounded-b-lg border-t border-gray-600">
                     <h3 className="text-lg font-semibold mb-3">Select Ticket Tier:</h3>
                     <div className="space-y-3">
-                      {event.ticket_tiers.map(tier => {
-                        const isSoldOut = tier.tickets_sold >= tier.capacity;
+                      {/* --- UPDATE: Sort the ticket tiers by price --- */}
+                      {[...event.ticket_tiers].sort((a, b) => a.price - b.price).map(tier => {
+                        const remainingTickets = tier.capacity - tier.tickets_sold;
+                        const maxAllowed = event.max_tickets_per_person || remainingTickets;
+                        const maxPurchasable = Math.min(remainingTickets, maxAllowed);
                         const isSelected = selectedTier?.id === tier.id && selectedEvent?.id === event.id;
+
                         return (
-                          <label key={tier.id} className={`flex items-center p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-600'} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
-                            <input
-                              type="radio"
-                              name={`event_${event.id}_tier`}
-                              disabled={isSoldOut}
-                              checked={isSelected}
-                              onChange={() => {
-                                setSelectedTier(tier);
-                                setSelectedEvent(event);
-                              }}
-                              className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500 focus:ring-green-500"
-                            />
-                            <div className="ml-4 flex-grow">
-                              <span className="font-bold">{tier.name}</span>
-                              <span className="ml-2 text-gray-400">(₹{tier.price})</span>
+                          <div key={tier.id} className={`p-3 rounded-md transition-all ${maxPurchasable <= 0 ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
+                            <div className="flex items-center">
+                              <input
+                                type="radio"
+                                id={`tier_${tier.id}`}
+                                name={`event_${event.id}_tier`}
+                                disabled={maxPurchasable <= 0}
+                                checked={isSelected}
+                                onChange={() => {
+                                  setSelectedTier(tier);
+                                  setSelectedEvent(event);
+                                  setQuantity(1);
+                                }}
+                                className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500 focus:ring-green-500"
+                              />
+                              <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
+                                <span className="font-bold">{tier.name}</span>
+                                <span className="ml-2 text-gray-400">(₹{tier.price})</span>
+                              </label>
+                              {maxPurchasable <= 0 && <span className="text-red-500 font-bold">Sold Out</span>}
                             </div>
-                            {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
-                          </label>
+                            {isSelected && maxPurchasable > 0 && (
+                              <div className="mt-4 flex items-center justify-center">
+                                <label className="mr-4">Quantity:</label>
+                                <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
+                                <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
+                                <button onClick={() => setQuantity(q => Math.min(maxPurchasable, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
@@ -235,7 +253,7 @@ export default function ProductionPage({ params }) {
                   disabled={!isRzpReady || !selectedTier}
                   className="inline-block bg-green-600 text-white font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
                 >
-                  {isRzpReady ? (selectedTier ? `Book Now (₹${selectedTier.price})` : 'Select a Tier') : 'Loading Payment...'}
+                  {isRzpReady ? (selectedTier ? `Book ${quantity} Ticket(s) (₹${selectedTier.price * quantity})` : 'Select a Tier') : 'Loading Payment...'}
                 </button>
               </div>
             </div>

@@ -47,6 +47,9 @@
       "type": "component",
       "component": "ticket-tiers.ticket-tier",
       "repeatable": true
+    },
+    "max_tickets_per_person": {
+      "type": "integer"
     }
   }
 }

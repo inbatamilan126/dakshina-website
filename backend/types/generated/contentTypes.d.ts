@@ -459,6 +459,7 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::event.event'> &
       Schema.Attribute.Private;
+    max_tickets_per_person: Schema.Attribute.Integer;
     publishedAt: Schema.Attribute.DateTime;
     ticket_tiers: Schema.Attribute.Component<'ticket-tiers.ticket-tier', true>;
     type: Schema.Attribute.Enumeration<['Public', 'Private']> &
@@ -490,6 +491,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    quantity: Schema.Attribute.Integer;
     razorpay_payment_id: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

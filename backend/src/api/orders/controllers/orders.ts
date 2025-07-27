@@ -20,14 +20,15 @@ module.exports = {
   async create(ctx) {
     console.log("--- Create order endpoint reached ---");
     try {
-      const { amount, eventIdentifier, tierName } = ctx.request.body;
+      const { amount, eventIdentifier, tierName, quantity } = ctx.request.body;
       const options = {
         amount: amount,
         currency: "INR",
         receipt: `receipt_${eventIdentifier}_${Date.now()}`,
         notes: { 
           eventCode: eventIdentifier,
-          tierName: tierName, // Pass the tier name in the notes
+          tierName: tierName,
+          quantity: quantity,
         }
       };
       const order = await razorpay.orders.create(options);
@@ -69,10 +70,11 @@ module.exports = {
 
       const userEmail = paymentDetails.email;
       const eventCode = orderDetails.notes.eventCode;
-      const tierName = orderDetails.notes.tierName; // Get the tier name from the secure notes
+      const tierName = orderDetails.notes.tierName;
+      const quantity = parseInt(orderDetails.notes.quantity, 10);
 
-      if (!eventCode || !userEmail || !tierName) {
-        throw new Error("Could not find eventCode, userEmail, or tierName in order notes.");
+      if (!eventCode || !userEmail || !tierName || !quantity) {
+        throw new Error("Could not find all required details in order notes.");
       }
       
       const events = await strapi.entityService.findMany('api::event.event', {
@@ -85,16 +87,13 @@ module.exports = {
       if (eventToUpdate) {
         const numericEventId = eventToUpdate.id;
 
-        // --- NEW LOGIC: Update the specific ticket tier ---
-        // We cast to 'any' to bypass the strict TypeScript check, as we know the data exists.
+        // --- NEW LOGIC: Update the specific ticket tier by the purchased quantity ---
         const tierIndex = (eventToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
 
         if (tierIndex > -1) {
-          // Create a deep copy of the tiers to avoid mutation issues
           const updatedTiers = JSON.parse(JSON.stringify((eventToUpdate as any).ticket_tiers));
-          updatedTiers[tierIndex].tickets_sold = (updatedTiers[tierIndex].tickets_sold || 0) + 1;
+          updatedTiers[tierIndex].tickets_sold = (updatedTiers[tierIndex].tickets_sold || 0) + quantity;
 
-          // Update the event with the new array of tiers
           await strapi.entityService.update('api::event.event', numericEventId, {
             data: { ticket_tiers: updatedTiers },
           });
@@ -103,18 +102,16 @@ module.exports = {
           console.error(`CRITICAL: Could not find tier with name ${tierName} on event ${numericEventId}.`);
         }
         
-        // --- Save the Order ---
         await strapi.service('api::order.order').create({
           data: {
             user_email: userEmail,
             event_id: String(numericEventId),
             razorpay_payment_id: razorpay_payment_id,
-            // We can add the tier name to the order for better record keeping
             ticket_tier: tierName, 
+            quantity: quantity,
           },
         });
         
-        // Prepare email details
         const artisticWorkComponent = (eventToUpdate as any).artistic_work?.[0];
         const production = artisticWorkComponent?.production;
         const solo = artisticWorkComponent?.solo;
@@ -124,10 +121,10 @@ module.exports = {
           eventDate: new Date(eventToUpdate.date).toLocaleString(),
           eventVenue: eventToUpdate.venue,
           paymentId: razorpay_payment_id,
-          tierName: tierName, // Add tier name to email
+          tierName: tierName,
+          quantity: quantity,
         };
 
-        // --- Send Ticket Email with Brevo ---
         console.log(`Sending ticket email to ${userEmail}...`);
         const sendSmtpEmail = new Brevo.SendSmtpEmail();
         sendSmtpEmail.to = [{ email: userEmail }];

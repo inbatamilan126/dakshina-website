@@ -19,6 +19,9 @@
     },
     "razorpay_payment_id": {
       "type": "string"
+    },
+    "quantity": {
+      "type": "integer"
     }
   }
 }
