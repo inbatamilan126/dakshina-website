@@ -1,10 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "team_memebers",
+  "collectionName": "team_members",
   "info": {
-    "singularName": "team-memeber",
-    "pluralName": "team-memebers",
-    "displayName": "Team Memeber"
+    "singularName": "team-member",
+    "pluralName": "team-members",
+    "displayName": "Team Member"
   },
   "options": {
     "draftAndPublish": true

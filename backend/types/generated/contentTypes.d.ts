@@ -569,6 +569,12 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
       'api::review.review'
     > &
       Schema.Attribute.Private;
+    photo_desktop: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    photo_mobile: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
     publication_name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     quote: Schema.Attribute.Text;
@@ -614,12 +620,12 @@ export interface ApiSoloSolo extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiTeamMemeberTeamMemeber extends Struct.CollectionTypeSchema {
-  collectionName: 'team_memebers';
+export interface ApiTeamMemberTeamMember extends Struct.CollectionTypeSchema {
+  collectionName: 'team_members';
   info: {
-    displayName: 'Team Memeber';
-    pluralName: 'team-memebers';
-    singularName: 'team-memeber';
+    displayName: 'Team Member';
+    pluralName: 'team-members';
+    singularName: 'team-member';
   };
   options: {
     draftAndPublish: true;
@@ -632,7 +638,7 @@ export interface ApiTeamMemeberTeamMemeber extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::team-memeber.team-memeber'
+      'api::team-member.team-member'
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
@@ -1161,7 +1167,7 @@ declare module '@strapi/strapi' {
       'api::production.production': ApiProductionProduction;
       'api::review.review': ApiReviewReview;
       'api::solo.solo': ApiSoloSolo;
-      'api::team-memeber.team-memeber': ApiTeamMemeberTeamMemeber;
+      'api::team-member.team-member': ApiTeamMemberTeamMember;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
