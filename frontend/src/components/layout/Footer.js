@@ -10,9 +10,9 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-serif font-bold text-white mb-4">Dakshina</h3>
             <p className="text-sm">Exploring the boundaries of classical and contemporary Indian dance.</p>
-            {/* --- NEW QUOTE --- */}
+            {/* --- FIX: Replaced apostrophe with HTML entity to fix build error --- */}
             <p className="text-sm italic text-gray-500 mt-4">
-              "The artist’s task is to deepen the mystery."
+              &ldquo;The artist&rsquo;s task is to deepen the mystery.&rdquo;
               <span className="block not-italic mt-1">— Francis Bacon</span>
             </p>
           </div>
@@ -21,10 +21,11 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-semibold tracking-wider uppercase text-gray-300">Quick Links</h3>
             <ul className="mt-4 space-y-2">
-              {/* --- UPDATE: Simplified links --- */}
               <li><Link href="/productions" className="hover:text-white">Our Work</Link></li>
               <li><Link href="/events" className="hover:text-white">Events</Link></li>
-              {/* We can add a 'Workshops' link here later */}
+              {/* --- UPDATE: Added Workshops and Classes links --- */}
+              <li><Link href="/workshops" className="hover:text-white">Workshops</Link></li>
+              <li><Link href="/classes" className="hover:text-white">Classes</Link></li>
             </ul>
           </div>
 
@@ -37,7 +38,6 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-gray-800 pt-8 text-center text-sm">
-          {/* --- UPDATE: Changed company name --- */}
           <p>&copy; {new Date().getFullYear()} The Dakshina Dance Repertory. All rights reserved.</p>
         </div>
       </div>

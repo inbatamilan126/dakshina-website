@@ -3,15 +3,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Import the Image component
+import Image from 'next/image';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
+  // --- UPDATE: Added Workshops and Classes links ---
   const navLinks = [
     { href: '/productions', label: 'Our Work' },
     { href: '/events', label: 'Events' },
-    // We will add a 'Workshops' link here later
+    { href: '/workshops', label: 'Workshops' },
+    { href: '/classes', label: 'Classes' },
   ];
 
   return (
@@ -21,13 +23,12 @@ export default function Navbar() {
           {/* Logo / Company Name */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-3">
-              {/* --- UPDATE: Logo is now active --- */}
               <Image 
-                src="/logo.png" // This points to frontend/public/logo.png
+                src="/logo.png"
                 alt="The Dakshina Dance Repertory Logo"
                 width={45} 
                 height={45}
-                className="h-12 w-auto" // Control size
+                className="h-12 w-auto"
               /> 
               <span className="text-xl font-bold font-serif tracking-wider">
                 The Dakshina Dance Repertory
