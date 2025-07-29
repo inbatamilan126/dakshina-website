@@ -10,18 +10,21 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-serif font-bold text-white mb-4">Dakshina</h3>
             <p className="text-sm">Exploring the boundaries of classical and contemporary Indian dance.</p>
+            {/* --- NEW QUOTE --- */}
+            <p className="text-sm italic text-gray-500 mt-4">
+              "The artist’s task is to deepen the mystery."
+              <span className="block not-italic mt-1">— Francis Bacon</span>
+            </p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="text-sm font-semibold tracking-wider uppercase text-gray-300">Quick Links</h3>
             <ul className="mt-4 space-y-2">
-              {/* --- UPDATE: Added new link for Divya Nayar --- */}
-              <li><Link href="/divya-nayar" className="hover:text-white">Divya Nayar</Link></li>
+              {/* --- UPDATE: Simplified links --- */}
               <li><Link href="/productions" className="hover:text-white">Our Work</Link></li>
               <li><Link href="/events" className="hover:text-white">Events</Link></li>
-              <li><Link href="/blog" className="hover:text-white">Reflections</Link></li>
-              <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+              {/* We can add a 'Workshops' link here later */}
             </ul>
           </div>
 
@@ -34,7 +37,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-gray-800 pt-8 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Dakshina Dance Company. All rights reserved.</p>
+          {/* --- UPDATE: Changed company name --- */}
+          <p>&copy; {new Date().getFullYear()} The Dakshina Dance Repertory. All rights reserved.</p>
         </div>
       </div>
     </footer>

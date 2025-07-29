@@ -17,31 +17,56 @@ const brevoApi = new Brevo.TransactionalEmailsApi();
 brevoApi.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 module.exports = {
+  // --- This function is now universal ---
   async create(ctx) {
-    console.log("--- Create order endpoint reached ---");
+    console.log("--- Universal create order endpoint reached ---");
     try {
-      const { amount, eventIdentifier, tierName, quantity } = ctx.request.body;
-      const options = {
-        amount: amount,
-        currency: "INR",
-        receipt: `receipt_${eventIdentifier}_${Date.now()}`,
-        notes: { 
-          eventCode: eventIdentifier,
-          tierName: tierName,
-          quantity: quantity,
-        }
-      };
+      const { amount, tierName, quantity, eventId, eventUid, workshopId, workshopSlug } = ctx.request.body;
+      
+      let options;
+
+      // Check if this is for an Event (Production) or a Workshop
+      if (eventId && eventUid) {
+        options = {
+          amount: amount,
+          currency: "INR",
+          receipt: `receipt_evt_${eventId}_${Date.now()}`,
+          notes: { 
+            type: 'event',
+            eventCode: eventUid,
+            tierName: tierName,
+            quantity: String(quantity),
+          }
+        };
+      } else if (workshopId && workshopSlug) {
+        options = {
+          amount: amount,
+          currency: "INR",
+          receipt: `receipt_ws_${workshopId}_${Date.now()}`,
+          notes: { 
+            type: 'workshop',
+            eventCode: workshopSlug,
+            tierName: tierName,
+            quantity: String(quantity),
+          }
+        };
+      } else {
+        return ctx.badRequest("Invalid request body. Missing event or workshop identifier.");
+      }
+
       const order = await razorpay.orders.create(options);
       if (!order) return ctx.badRequest("Order creation failed.");
       return order;
+
     } catch (error) {
       console.error("Error creating Razorpay order:", error);
       return ctx.internalServerError("Could not create order.");
     }
   },
 
+  // --- This function is now universal ---
   async verify(ctx) {
-    console.log("--- Verification endpoint reached by frontend ---");
+    console.log("--- Universal verification endpoint reached ---");
 
     const { 
       razorpay_order_id, 
@@ -58,7 +83,6 @@ module.exports = {
     const expectedSignature = crypto.createHmac("sha256", KEY_SECRET).update(body.toString()).digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
-      console.error("SIGNATURE MISMATCH: Payment verification failed.");
       return ctx.badRequest('Invalid payment signature');
     }
 
@@ -69,73 +93,89 @@ module.exports = {
       const paymentDetails = await razorpay.payments.fetch(razorpay_payment_id);
 
       const userEmail = paymentDetails.email;
-      const eventCode = orderDetails.notes.eventCode;
-      const tierName = orderDetails.notes.tierName;
-      const quantity = parseInt(orderDetails.notes.quantity, 10);
+      const { type, eventCode, tierName, quantity: qtyString } = orderDetails.notes;
+      const quantity = parseInt(qtyString, 10);
 
-      if (!eventCode || !userEmail || !tierName || !quantity) {
+      if (!type || !eventCode || !userEmail || !tierName || !quantity) {
         throw new Error("Could not find all required details in order notes.");
       }
       
-      const events = await strapi.entityService.findMany('api::event.event', {
-        filters: { uid: eventCode } as any,
-        populate: '*',
-      });
+      let itemToUpdate;
+      let numericId;
+      let emailParams = {};
 
-      const eventToUpdate = events?.[0];
+      // Handle based on the type stored in the notes
+      if (type === 'event') {
+        const events = await strapi.entityService.findMany('api::event.event', { filters: { uid: eventCode } as any, populate: '*' });
+        itemToUpdate = events?.[0];
+        if (itemToUpdate) {
+          numericId = itemToUpdate.id;
+          const artisticWork = (itemToUpdate as any).artistic_work?.[0];
+          emailParams = {
+            eventName: artisticWork?.production?.title || artisticWork?.solo?.title,
+            eventDate: new Date(itemToUpdate.date).toLocaleString(),
+            eventVenue: itemToUpdate.venue,
+          };
+        }
+      } else if (type === 'workshop') {
+        const workshops = await strapi.entityService.findMany('api::workshop.workshop', { filters: { slug: eventCode } as any, populate: '*' });
+        itemToUpdate = workshops?.[0];
+        if (itemToUpdate) {
+          numericId = itemToUpdate.id;
+          emailParams = {
+            eventName: itemToUpdate.title,
+            eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`,
+            eventVenue: "Workshop",
+          };
+        }
+      }
 
-      if (eventToUpdate) {
-        const numericEventId = eventToUpdate.id;
-
-        // --- NEW LOGIC: Update the specific ticket tier by the purchased quantity ---
-        const tierIndex = (eventToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
-
+      if (itemToUpdate) {
+        const tierIndex = (itemToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
         if (tierIndex > -1) {
-          const updatedTiers = JSON.parse(JSON.stringify((eventToUpdate as any).ticket_tiers));
+          const updatedTiers = JSON.parse(JSON.stringify((itemToUpdate as any).ticket_tiers));
           updatedTiers[tierIndex].tickets_sold = (updatedTiers[tierIndex].tickets_sold || 0) + quantity;
 
-          await strapi.entityService.update('api::event.event', numericEventId, {
-            data: { ticket_tiers: updatedTiers },
-          });
-          console.log(`Update successful: tickets_sold for tier '${tierName}' on event ${numericEventId} is now ${updatedTiers[tierIndex].tickets_sold}`);
-        } else {
-          console.error(`CRITICAL: Could not find tier with name ${tierName} on event ${numericEventId}.`);
+          // --- CRUCIAL FIX: Use explicit update calls to satisfy TypeScript ---
+          if (type === 'event') {
+            await strapi.entityService.update('api::event.event', numericId, {
+              data: { ticket_tiers: updatedTiers },
+            });
+          } else if (type === 'workshop') {
+            await strapi.entityService.update('api::workshop.workshop', numericId, {
+              data: { ticket_tiers: updatedTiers },
+            });
+          }
+          console.log(`Update successful for ${type} ${numericId}`);
         }
         
         await strapi.service('api::order.order').create({
           data: {
             user_email: userEmail,
-            event_id: String(numericEventId),
+            event_id: String(numericId),
             razorpay_payment_id: razorpay_payment_id,
             ticket_tier: tierName, 
             quantity: quantity,
           },
         });
         
-        const artisticWorkComponent = (eventToUpdate as any).artistic_work?.[0];
-        const production = artisticWorkComponent?.production;
-        const solo = artisticWorkComponent?.solo;
-        
-        const emailParams = {
-          eventName: production?.title || solo?.title || 'Upcoming Performance',
-          eventDate: new Date(eventToUpdate.date).toLocaleString(),
-          eventVenue: eventToUpdate.venue,
+        Object.assign(emailParams, {
           paymentId: razorpay_payment_id,
           tierName: tierName,
           quantity: quantity,
-        };
+        });
 
         console.log(`Sending ticket email to ${userEmail}...`);
         const sendSmtpEmail = new Brevo.SendSmtpEmail();
         sendSmtpEmail.to = [{ email: userEmail }];
-        sendSmtpEmail.sender = { email: 'inbatamilanhk10@gmail.com', name: 'Dakshina Dance Company' };
-        sendSmtpEmail.templateId = 1; // Replace with your actual Template ID
+        sendSmtpEmail.sender = { email: 'info@divyanayardance.com', name: 'The Dakshina Dance Repertory' };
+        sendSmtpEmail.templateId = 1; // You might want different template IDs for events vs workshops
         sendSmtpEmail.params = emailParams;
         await brevoApi.sendTransacEmail(sendSmtpEmail);
         console.log("Ticket email sent successfully.");
 
       } else {
-        console.error(`CRITICAL: Could not find event with event_code ${eventCode} after payment.`);
+        console.error(`CRITICAL: Could not find ${type} with code ${eventCode} after payment.`);
       }
 
     } catch (err) {

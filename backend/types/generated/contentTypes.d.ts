@@ -436,6 +436,36 @@ export interface ApiBlogPostBlogPost extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiClassesPageClassesPage extends Struct.SingleTypeSchema {
+  collectionName: 'classes_pages';
+  info: {
+    displayName: 'Classes Page';
+    pluralName: 'classes-pages';
+    singularName: 'classes-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Blocks;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::classes-page.classes-page'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiEventEvent extends Struct.CollectionTypeSchema {
   collectionName: 'events';
   info: {
@@ -648,6 +678,48 @@ export interface ApiTeamMemberTeamMember extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiWorkshopWorkshop extends Struct.CollectionTypeSchema {
+  collectionName: 'workshops';
+  info: {
+    displayName: 'Workshop';
+    pluralName: 'workshops';
+    singularName: 'workshop';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    banner_image: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Blocks;
+    end_date: Schema.Attribute.Date;
+    instructor: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::team-member.team-member'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::workshop.workshop'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    schedule: Schema.Attribute.Component<'sessions.session-detail', true>;
+    slug: Schema.Attribute.UID<'title'>;
+    start_date: Schema.Attribute.Date;
+    ticket_tiers: Schema.Attribute.Component<'ticket-tiers.ticket-tier', true>;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    venue: Schema.Attribute.String;
   };
 }
 
@@ -1162,12 +1234,14 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::author.author': ApiAuthorAuthor;
       'api::blog-post.blog-post': ApiBlogPostBlogPost;
+      'api::classes-page.classes-page': ApiClassesPageClassesPage;
       'api::event.event': ApiEventEvent;
       'api::order.order': ApiOrderOrder;
       'api::production.production': ApiProductionProduction;
       'api::review.review': ApiReviewReview;
       'api::solo.solo': ApiSoloSolo;
       'api::team-member.team-member': ApiTeamMemberTeamMember;
+      'api::workshop.workshop': ApiWorkshopWorkshop;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

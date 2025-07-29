@@ -1,0 +1,31 @@
+{
+  "kind": "singleType",
+  "collectionName": "classes_pages",
+  "info": {
+    "singularName": "classes-page",
+    "pluralName": "classes-pages",
+    "displayName": "Classes Page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    }
+  }
+}

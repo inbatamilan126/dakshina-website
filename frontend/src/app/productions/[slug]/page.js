@@ -44,7 +44,7 @@ export default function ProductionPage({ params }) {
 
         if (currentProduction) {
           const now = new Date().toISOString();
-          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][populate]=*&populate=ticket_tiers`);
+          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*&populate=ticket_tiers`);
           const eventsData = await eventsRes.json();
           const allUpcomingEvents = eventsData.data || [];
 
@@ -76,6 +76,7 @@ export default function ProductionPage({ params }) {
   
   const validateEmailFormat = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
 
+  // --- CORRECTED: This function no longer needs a parameter ---
   const handleBookClick = () => {
     if (!selectedTier) {
       alert("Please select a ticket tier.");
@@ -86,6 +87,7 @@ export default function ProductionPage({ params }) {
       return;
     }
     setEmailError('');
+    // We don't need to setSelectedEvent here, it's already set by the radio button
     setShowConfirmModal(true);
   };
   
@@ -94,18 +96,32 @@ export default function ProductionPage({ params }) {
     setShowConfirmModal(false);
 
     try {
+      // --- DEBUGGING STEP: Log the object we are trying to access ---
+      console.log("Selected event for payment:", selectedEvent);
+
+      const eventId = selectedEvent.id;
+      const eventUid = selectedEvent.uid;
+
+      if (!eventId || !eventUid) {
+        throw new Error("Could not determine Event ID or UID for payment.");
+      }
+
       const orderRes = await fetch('http://localhost:1337/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: selectedTier.price * quantity * 100,
-          eventIdentifier: selectedEvent.uid,
+          eventId: eventId,
+          eventUid: eventUid,
           tierName: selectedTier.name,
           quantity: quantity,
         }),
       });
 
-      if (!orderRes.ok) throw new Error('Failed to create Razorpay order.');
+      if (!orderRes.ok) {
+        const errorBody = await orderRes.json();
+        throw new Error(errorBody.error?.message || 'Failed to create Razorpay order.');
+      }
       const orderDetails = await orderRes.json();
       
       const razorpayKeyId = 'rzp_test_tn3D5B6Bh0HPcH'; // Replace with your key
@@ -114,7 +130,7 @@ export default function ProductionPage({ params }) {
         key: razorpayKeyId,
         amount: orderDetails.amount,
         currency: "INR",
-        name: "Dakshina Dance Company",
+        name: "The Dakshina Dance Repertory",
         description: `${quantity} x Ticket(s): ${selectedTier.name} for ${production.title}`,
         image: "https://placehold.co/100x100/16a34a/white?text=D",
         order_id: orderDetails.id,
@@ -141,7 +157,7 @@ export default function ProductionPage({ params }) {
         },
         prefill: { email },
         notes: { 
-          eventCode: selectedEvent.uid,
+          eventCode: eventUid,
           tierName: selectedTier.name,
           quantity: quantity,
         },
@@ -179,7 +195,7 @@ export default function ProductionPage({ params }) {
       )}
       <main className="min-h-screen bg-gray-900 text-white">
         <div className="relative w-full h-96">
-          <Image src={bannerUrl} alt={title} layout="fill" objectFit="cover" priority />
+          <Image src={bannerUrl} alt={title} fill sizes="100vw" style={{objectFit: 'cover'}} priority />
           <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
             <h1 className="text-6xl font-serif font-bold text-center">{title}</h1>
           </div>
@@ -198,41 +214,39 @@ export default function ProductionPage({ params }) {
                   <div className="bg-gray-700 p-4 rounded-b-lg border-t border-gray-600">
                     <h3 className="text-lg font-semibold mb-3">Select Ticket Tier:</h3>
                     <div className="space-y-3">
-                      {/* --- UPDATE: Sort the ticket tiers by price --- */}
                       {[...event.ticket_tiers].sort((a, b) => a.price - b.price).map(tier => {
                         const remainingTickets = tier.capacity - tier.tickets_sold;
-                        const maxAllowed = event.max_tickets_per_person || remainingTickets;
-                        const maxPurchasable = Math.min(remainingTickets, maxAllowed);
+                        const isSoldOut = remainingTickets <= 0;
                         const isSelected = selectedTier?.id === tier.id && selectedEvent?.id === event.id;
 
                         return (
-                          <div key={tier.id} className={`p-3 rounded-md transition-all ${maxPurchasable <= 0 ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
+                          <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
                             <div className="flex items-center">
                               <input
                                 type="radio"
                                 id={`tier_${tier.id}`}
                                 name={`event_${event.id}_tier`}
-                                disabled={maxPurchasable <= 0}
+                                disabled={isSoldOut}
                                 checked={isSelected}
                                 onChange={() => {
                                   setSelectedTier(tier);
                                   setSelectedEvent(event);
                                   setQuantity(1);
                                 }}
-                                className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500 focus:ring-green-500"
+                                className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"
                               />
                               <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
                                 <span className="font-bold">{tier.name}</span>
                                 <span className="ml-2 text-gray-400">(₹{tier.price})</span>
                               </label>
-                              {maxPurchasable <= 0 && <span className="text-red-500 font-bold">Sold Out</span>}
+                              {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
                             </div>
-                            {isSelected && maxPurchasable > 0 && (
+                            {isSelected && !isSoldOut && (
                               <div className="mt-4 flex items-center justify-center">
                                 <label className="mr-4">Quantity:</label>
                                 <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
                                 <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
-                                <button onClick={() => setQuantity(q => Math.min(maxPurchasable, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
+                                <button onClick={() => setQuantity(q => Math.min(remainingTickets, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
                               </div>
                             )}
                           </div>
@@ -248,6 +262,7 @@ export default function ProductionPage({ params }) {
                 {emailError && <p className="text-red-500 mt-2 text-center">{emailError}</p>}
               </div>
               <div className="mt-6 text-center">
+                {/* --- CORRECTED: The onClick no longer passes a parameter --- */}
                 <button 
                   onClick={handleBookClick}
                   disabled={!isRzpReady || !selectedTier}

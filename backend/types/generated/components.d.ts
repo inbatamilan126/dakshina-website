@@ -23,6 +23,19 @@ export interface LinksSoloLink extends Struct.ComponentSchema {
   };
 }
 
+export interface SessionsSessionDetail extends Struct.ComponentSchema {
+  collectionName: 'components_sessions_session_details';
+  info: {
+    displayName: 'SessionDetail';
+  };
+  attributes: {
+    date: Schema.Attribute.Date;
+    end_time: Schema.Attribute.Time;
+    start_time: Schema.Attribute.Time;
+    topic: Schema.Attribute.String;
+  };
+}
+
 export interface TicketTiersTicketTier extends Struct.ComponentSchema {
   collectionName: 'components_ticket_tiers_ticket_tiers';
   info: {
@@ -43,6 +56,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'links.production-link': LinksProductionLink;
       'links.solo-link': LinksSoloLink;
+      'sessions.session-detail': SessionsSessionDetail;
       'ticket-tiers.ticket-tier': TicketTiersTicketTier;
     }
   }
