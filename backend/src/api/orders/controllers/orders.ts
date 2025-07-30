@@ -17,27 +17,23 @@ const razorpay = new Razorpay({
 const brevoApi = new Brevo.TransactionalEmailsApi();
 brevoApi.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
-// --- CORRECTED: Initialize the Mux client with the modern syntax ---
+// Initialize the Mux client
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN_ID,
   tokenSecret: process.env.MUX_TOKEN_SECRET,
 });
 
-// --- Helper function to generate a secure Mux URL ---
-const generateSecureMuxUrl = async (livestreamId: string) => {
-  if (!livestreamId) return null;
+// Helper function to generate a secure Mux URL for a VOD Asset
+const generateSecureMuxUrl = async (assetId: string) => {
+  if (!assetId) return null;
   try {
-    // --- CORRECTED: Use the new client structure to call the API ---
-    const playbackId = await mux.video.liveStreams.createPlaybackId(livestreamId, {
-      policy: 'signed',
+    const playbackId = await mux.video.assets.createPlaybackId(assetId, {
+      policy: 'signed', 
     });
-    
-    // In a real production app, you would generate a JWT here.
-    // For now, this playback ID itself is unique enough for our purposes.
+    console.log(`Secure Mux Playback ID generated: ${playbackId.id}`);
     return `https://stream.mux.com/${playbackId.id}.m3u8`;
-
   } catch (error) {
-    console.error(`Error generating Mux URL for livestream ${livestreamId}:`, error);
+    console.error(`Error generating Mux URL for asset ${assetId}:`, error);
     return null;
   }
 };
@@ -94,16 +90,13 @@ module.exports = {
       let numericId;
       let emailParams = {};
       let secureWatchLinks = [];
-      let brevoTemplateId = 1; // Default template ID
+      let brevoTemplateId = 1;
 
       if (type === 'event') {
         const events = await strapi.entityService.findMany('api::event.event', { filters: { uid: eventCode } as any, populate: '*' });
         itemToUpdate = events?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          const secureLink = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id);
-          if (secureLink) secureWatchLinks.push({ name: 'Watch Live', url: secureLink });
-          
           const artisticWork = (itemToUpdate as any).artistic_work?.[0];
           emailParams = { eventName: artisticWork?.production?.title || artisticWork?.solo?.title, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
           brevoTemplateId = 1;
@@ -113,12 +106,6 @@ module.exports = {
         itemToUpdate = workshops?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          for (const session of (itemToUpdate as any).schedule) {
-            const secureLink = await generateSecureMuxUrl(session.mux_livestream_id);
-            if (secureLink) {
-              secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: secureLink });
-            }
-          }
           emailParams = { eventName: itemToUpdate.title, eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, eventVenue: itemToUpdate.venue };
           brevoTemplateId = 2;
         }
@@ -126,11 +113,29 @@ module.exports = {
 
       if (itemToUpdate) {
         const tierIndex = (itemToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
+        
         if (tierIndex > -1) {
+          const purchasedTier = (itemToUpdate as any).ticket_tiers[tierIndex];
+
+          // --- NEW LOGIC: Only generate links if the tier is for online access ---
+          if (purchasedTier.is_online_access) {
+            console.log("Online access ticket detected. Generating secure links...");
+            if (type === 'event') {
+              const secureLink = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id);
+              if (secureLink) secureWatchLinks.push({ name: 'Watch Performance', url: secureLink });
+            } else if (type === 'workshop') {
+              for (const session of (itemToUpdate as any).schedule) {
+                const secureLink = await generateSecureMuxUrl(session.mux_livestream_id);
+                if (secureLink) {
+                  secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: secureLink });
+                }
+              }
+            }
+          }
+
           const updatedTiers = JSON.parse(JSON.stringify((itemToUpdate as any).ticket_tiers));
           updatedTiers[tierIndex].tickets_sold = (updatedTiers[tierIndex].tickets_sold || 0) + quantity;
           
-          // --- CORRECTED: Use an if/else block to satisfy TypeScript ---
           if (type === 'event') {
             await strapi.entityService.update('api::event.event', numericId, { data: { ticket_tiers: updatedTiers } });
           } else if (type === 'workshop') {

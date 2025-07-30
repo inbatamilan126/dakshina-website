@@ -44,6 +44,9 @@ export interface TicketTiersTicketTier extends Struct.ComponentSchema {
   };
   attributes: {
     capacity: Schema.Attribute.Integer;
+    is_online_access: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     price: Schema.Attribute.Decimal & Schema.Attribute.Required;
     tickets_sold: Schema.Attribute.Integer &
