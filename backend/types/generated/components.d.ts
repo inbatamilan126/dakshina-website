@@ -31,6 +31,7 @@ export interface SessionsSessionDetail extends Struct.ComponentSchema {
   attributes: {
     date: Schema.Attribute.Date;
     end_time: Schema.Attribute.Time;
+    mux_livestream_id: Schema.Attribute.String;
     start_time: Schema.Attribute.Time;
     topic: Schema.Attribute.String;
   };

@@ -50,6 +50,9 @@
     },
     "max_tickets_per_person": {
       "type": "integer"
+    },
+    "mux_livestream_id": {
+      "type": "string"
     }
   }
 }

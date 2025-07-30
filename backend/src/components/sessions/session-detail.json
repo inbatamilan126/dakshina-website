@@ -16,6 +16,9 @@
     },
     "topic": {
       "type": "string"
+    },
+    "mux_livestream_id": {
+      "type": "string"
     }
   },
   "config": {}

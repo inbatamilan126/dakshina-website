@@ -14,7 +14,7 @@
     "user_email": {
       "type": "string"
     },
-    "event_id": {
+    "related_item_id": {
       "type": "string"
     },
     "razorpay_payment_id": {
@@ -22,6 +22,9 @@
     },
     "quantity": {
       "type": "integer"
+    },
+    "secure_watch_links": {
+      "type": "json"
     }
   }
 }
