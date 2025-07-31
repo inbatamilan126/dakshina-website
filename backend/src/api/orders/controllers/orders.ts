@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 const Razorpay = require('razorpay');
 const Brevo = require('@getbrevo/brevo');
 import Mux from '@mux/mux-node';
-// We no longer need the fs or path modules here
+// We no longer need the fs or path modules
 
 // Initialize clients
 const razorpay = new Razorpay({
@@ -21,16 +21,15 @@ const mux = new Mux({
 });
 
 // Helper function to generate a JWT-signed URL
-const generateSecureMuxUrl = async (assetId: string) => {
+const generateSecureMuxUrl = async (assetId: string, expirationDuration: string) => {
   if (!assetId) return null;
   try {
     const playbackId = await mux.video.assets.createPlaybackId(assetId, { policy: 'signed' });
     
-    // --- FINAL, ROBUST FIX: Use the pre-encoded key directly from the .env file ---
     const token = await mux.jwt.signPlaybackId(playbackId.id, {
       keyId: process.env.MUX_SIGNING_KEY_ID,
-      keySecret: process.env.MUX_BASE64_PRIVATE_KEY, // Use the new environment variable
-      expiration: '7d',
+      keySecret: process.env.MUX_BASE64_PRIVATE_KEY,
+      expiration: expirationDuration, // Use the calculated duration string (e.g., "3600s")
       type: 'video'
     });
     
@@ -105,14 +104,19 @@ module.exports = {
         itemToUpdate = events?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          const muxData = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id);
+          // --- FINAL FIX: Calculate duration in seconds from now ---
+          const eventEndTime = new Date(itemToUpdate.date).getTime();
+          const expirationTime = eventEndTime + (6 * 60 * 60 * 1000); // 6 hours after event in ms
+          const now = Date.now();
+          const durationInSeconds = Math.floor((expirationTime - now) / 1000);
+
+          const muxData = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id, `${durationInSeconds}s`);
           if (muxData) {
             const watchUrl = `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}`;
             secureWatchLinks.push({ name: 'Watch Live', url: watchUrl });
           }
           const artisticWork = (itemToUpdate as any).artistic_work?.[0];
           emailParams = { eventName: artisticWork?.production?.title || artisticWork?.solo?.title, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
-          brevoTemplateId = 4;
         }
       } else if (type === 'workshop') {
         const workshops = await strapi.entityService.findMany('api::workshop.workshop', { filters: { slug: eventCode } as any, populate: '*' });
@@ -120,14 +124,18 @@ module.exports = {
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
           for (const session of (itemToUpdate as any).schedule) {
-            const muxData = await generateSecureMuxUrl(session.mux_livestream_id);
+            const sessionEndTime = new Date(`${session.date}T${session.end_time}`).getTime();
+            const expirationTime = sessionEndTime + (6 * 60 * 60 * 1000);
+            const now = Date.now();
+            const durationInSeconds = Math.floor((expirationTime - now) / 1000);
+
+            const muxData = await generateSecureMuxUrl(session.mux_livestream_id, `${durationInSeconds}s`);
             if (muxData) {
               const watchUrl = `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}`;
               secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: watchUrl });
             }
           }
           emailParams = { eventName: itemToUpdate.title, eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, eventVenue: itemToUpdate.venue };
-          brevoTemplateId = 5;
         }
       }
 
@@ -135,8 +143,10 @@ module.exports = {
         const tierIndex = (itemToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
         if (tierIndex > -1) {
           const purchasedTier = (itemToUpdate as any).ticket_tiers[tierIndex];
-          if (!purchasedTier.is_online_access) {
-            brevoTemplateId = (type === 'event') ? 1 : 3;
+          if (purchasedTier.is_online_access) {
+             brevoTemplateId = (type === 'event') ? 4 : 5;
+          } else {
+             brevoTemplateId = (type === 'event') ? 1 : 3;
           }
 
           const updatedTiers = JSON.parse(JSON.stringify((itemToUpdate as any).ticket_tiers));
