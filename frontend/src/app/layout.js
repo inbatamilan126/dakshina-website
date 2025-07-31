@@ -6,6 +6,7 @@ import './globals.css';
 // This is a more direct way to import and avoids any alias configuration issues.
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import GoogleAnalytics from '../components/utility/GoogleAnalytics'
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,6 +19,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter.className}>
+        {/* Google Analytics component */}
+        <GoogleAnalytics />
+
         {/* Navbar will be at the top of every page */}
         <Navbar />
         
