@@ -6,32 +6,37 @@ import * as crypto from 'crypto';
 const Razorpay = require('razorpay');
 const Brevo = require('@getbrevo/brevo');
 import Mux from '@mux/mux-node';
+// We no longer need the fs or path modules here
 
-// Initialize the Razorpay client
+// Initialize clients
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-
-// Initialize the Brevo client
 const brevoApi = new Brevo.TransactionalEmailsApi();
 brevoApi.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-
-// Initialize the Mux client
 const mux = new Mux({
   tokenId: process.env.MUX_TOKEN_ID,
   tokenSecret: process.env.MUX_TOKEN_SECRET,
 });
 
-// Helper function to generate a secure Mux URL for a VOD Asset
+// Helper function to generate a JWT-signed URL
 const generateSecureMuxUrl = async (assetId: string) => {
   if (!assetId) return null;
   try {
-    const playbackId = await mux.video.assets.createPlaybackId(assetId, {
-      policy: 'signed', 
+    const playbackId = await mux.video.assets.createPlaybackId(assetId, { policy: 'signed' });
+    
+    // --- FINAL, ROBUST FIX: Use the pre-encoded key directly from the .env file ---
+    const token = await mux.jwt.signPlaybackId(playbackId.id, {
+      keyId: process.env.MUX_SIGNING_KEY_ID,
+      keySecret: process.env.MUX_BASE64_PRIVATE_KEY, // Use the new environment variable
+      expiration: '7d',
+      type: 'video'
     });
-    console.log(`Secure Mux Playback ID generated: ${playbackId.id}`);
-    return `https://stream.mux.com/${playbackId.id}.m3u8`;
+    
+    console.log(`Secure Mux Playback ID and JWT generated for ${playbackId.id}`);
+    return { playbackId: playbackId.id, token: token };
+
   } catch (error) {
     console.error(`Error generating Mux URL for asset ${assetId}:`, error);
     return null;
@@ -61,6 +66,7 @@ module.exports = {
   },
 
   async verify(ctx) {
+    // ... (Signature verification logic remains the same) ...
     console.log("--- Universal verification endpoint reached ---");
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = ctx.request.body;
@@ -92,45 +98,45 @@ module.exports = {
       let secureWatchLinks = [];
       let brevoTemplateId = 1;
 
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
       if (type === 'event') {
         const events = await strapi.entityService.findMany('api::event.event', { filters: { uid: eventCode } as any, populate: '*' });
         itemToUpdate = events?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
+          const muxData = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id);
+          if (muxData) {
+            const watchUrl = `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}`;
+            secureWatchLinks.push({ name: 'Watch Live', url: watchUrl });
+          }
           const artisticWork = (itemToUpdate as any).artistic_work?.[0];
           emailParams = { eventName: artisticWork?.production?.title || artisticWork?.solo?.title, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
-          brevoTemplateId = 1;
+          brevoTemplateId = 4;
         }
       } else if (type === 'workshop') {
         const workshops = await strapi.entityService.findMany('api::workshop.workshop', { filters: { slug: eventCode } as any, populate: '*' });
         itemToUpdate = workshops?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
+          for (const session of (itemToUpdate as any).schedule) {
+            const muxData = await generateSecureMuxUrl(session.mux_livestream_id);
+            if (muxData) {
+              const watchUrl = `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}`;
+              secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: watchUrl });
+            }
+          }
           emailParams = { eventName: itemToUpdate.title, eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, eventVenue: itemToUpdate.venue };
-          brevoTemplateId = 2;
+          brevoTemplateId = 5;
         }
       }
 
       if (itemToUpdate) {
         const tierIndex = (itemToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
-        
         if (tierIndex > -1) {
           const purchasedTier = (itemToUpdate as any).ticket_tiers[tierIndex];
-
-          // --- NEW LOGIC: Only generate links if the tier is for online access ---
-          if (purchasedTier.is_online_access) {
-            console.log("Online access ticket detected. Generating secure links...");
-            if (type === 'event') {
-              const secureLink = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id);
-              if (secureLink) secureWatchLinks.push({ name: 'Watch Performance', url: secureLink });
-            } else if (type === 'workshop') {
-              for (const session of (itemToUpdate as any).schedule) {
-                const secureLink = await generateSecureMuxUrl(session.mux_livestream_id);
-                if (secureLink) {
-                  secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: secureLink });
-                }
-              }
-            }
+          if (!purchasedTier.is_online_access) {
+            brevoTemplateId = (type === 'event') ? 1 : 3;
           }
 
           const updatedTiers = JSON.parse(JSON.stringify((itemToUpdate as any).ticket_tiers));

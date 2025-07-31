@@ -44,7 +44,7 @@ export default function ProductionPage({ params }) {
 
         if (currentProduction) {
           const now = new Date().toISOString();
-          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*&populate=ticket_tiers`);
+          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate=ticket_tiers`);
           const eventsData = await eventsRes.json();
           const allUpcomingEvents = eventsData.data || [];
 
@@ -76,7 +76,6 @@ export default function ProductionPage({ params }) {
   
   const validateEmailFormat = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
 
-  // --- CORRECTED: This function no longer needs a parameter ---
   const handleBookClick = () => {
     if (!selectedTier) {
       alert("Please select a ticket tier.");
@@ -87,7 +86,6 @@ export default function ProductionPage({ params }) {
       return;
     }
     setEmailError('');
-    // We don't need to setSelectedEvent here, it's already set by the radio button
     setShowConfirmModal(true);
   };
   
@@ -96,25 +94,18 @@ export default function ProductionPage({ params }) {
     setShowConfirmModal(false);
 
     try {
-      // --- DEBUGGING STEP: Log the object we are trying to access ---
-      console.log("Selected event for payment:", selectedEvent);
-
-      const eventId = selectedEvent.id;
-      const eventUid = selectedEvent.uid;
-
-      if (!eventId || !eventUid) {
-        throw new Error("Could not determine Event ID or UID for payment.");
-      }
+      // --- UPDATE: Determine quantity based on ticket type ---
+      const purchaseQuantity = selectedTier.is_online_access ? 1 : quantity;
 
       const orderRes = await fetch('http://localhost:1337/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: selectedTier.price * quantity * 100,
-          eventId: eventId,
-          eventUid: eventUid,
+          amount: selectedTier.price * purchaseQuantity * 100,
+          eventId: selectedEvent.id,
+          eventUid: selectedEvent.uid,
           tierName: selectedTier.name,
-          quantity: quantity,
+          quantity: purchaseQuantity,
         }),
       });
 
@@ -131,7 +122,7 @@ export default function ProductionPage({ params }) {
         amount: orderDetails.amount,
         currency: "INR",
         name: "The Dakshina Dance Repertory",
-        description: `${quantity} x Ticket(s): ${selectedTier.name} for ${production.title}`,
+        description: `${purchaseQuantity} x Ticket(s): ${selectedTier.name} for ${production.title}`,
         image: "https://placehold.co/100x100/16a34a/white?text=D",
         order_id: orderDetails.id,
         
@@ -157,9 +148,9 @@ export default function ProductionPage({ params }) {
         },
         prefill: { email },
         notes: { 
-          eventCode: eventUid,
+          eventCode: selectedEvent.uid,
           tierName: selectedTier.name,
-          quantity: quantity,
+          quantity: purchaseQuantity,
         },
         theme: { color: "#16a34a" }
       };
@@ -231,7 +222,7 @@ export default function ProductionPage({ params }) {
                                 onChange={() => {
                                   setSelectedTier(tier);
                                   setSelectedEvent(event);
-                                  setQuantity(1);
+                                  setQuantity(1); // Always reset to 1 on selection change
                                 }}
                                 className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"
                               />
@@ -241,7 +232,8 @@ export default function ProductionPage({ params }) {
                               </label>
                               {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
                             </div>
-                            {isSelected && !isSoldOut && (
+                            {/* --- UPDATE: Conditionally show quantity selector --- */}
+                            {isSelected && !isSoldOut && !tier.is_online_access && (
                               <div className="mt-4 flex items-center justify-center">
                                 <label className="mr-4">Quantity:</label>
                                 <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
@@ -262,13 +254,12 @@ export default function ProductionPage({ params }) {
                 {emailError && <p className="text-red-500 mt-2 text-center">{emailError}</p>}
               </div>
               <div className="mt-6 text-center">
-                {/* --- CORRECTED: The onClick no longer passes a parameter --- */}
                 <button 
                   onClick={handleBookClick}
                   disabled={!isRzpReady || !selectedTier}
                   className="inline-block bg-green-600 text-white font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
                 >
-                  {isRzpReady ? (selectedTier ? `Book ${quantity} Ticket(s) (₹${selectedTier.price * quantity})` : 'Select a Tier') : 'Loading Payment...'}
+                  {isRzpReady ? (selectedTier ? `Book ${selectedTier.is_online_access ? 1 : quantity} Ticket(s) (₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading Payment...'}
                 </button>
               </div>
             </div>

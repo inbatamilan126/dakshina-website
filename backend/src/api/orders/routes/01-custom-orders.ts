@@ -4,7 +4,7 @@ export default {
   routes: [
     {
       method: 'POST',
-      path: '/orders/create', // The new route for creating an order
+      path: '/orders/create',
       handler: 'api::orders.orders.create',
       config: {
         auth: false,

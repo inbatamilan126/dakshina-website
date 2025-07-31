@@ -89,15 +89,18 @@ export default function WorkshopPage({ params }) {
     setShowConfirmModal(false);
 
     try {
+      // --- UPDATE: Determine quantity based on ticket type ---
+      const purchaseQuantity = selectedTier.is_online_access ? 1 : quantity;
+
       const orderRes = await fetch('http://localhost:1337/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: selectedTier.price * quantity * 100,
+          amount: selectedTier.price * purchaseQuantity * 100,
           workshopId: workshop.id,
           workshopSlug: workshop.slug,
           tierName: selectedTier.name,
-          quantity: quantity,
+          quantity: purchaseQuantity,
         }),
       });
 
@@ -111,7 +114,7 @@ export default function WorkshopPage({ params }) {
         amount: orderDetails.amount,
         currency: "INR",
         name: "The Dakshina Dance Repertory",
-        description: `${quantity} x Ticket(s): ${selectedTier.name} for ${workshop.title}`,
+        description: `${purchaseQuantity} x Ticket(s): ${selectedTier.name} for ${workshop.title}`,
         image: "https://placehold.co/100x100/16a34a/white?text=D",
         order_id: orderDetails.id,
         
@@ -139,7 +142,7 @@ export default function WorkshopPage({ params }) {
         notes: { 
           eventCode: workshop.slug,
           tierName: selectedTier.name,
-          quantity: quantity,
+          quantity: purchaseQuantity,
         },
         theme: { color: "#16a34a" }
       };
@@ -206,7 +209,6 @@ export default function WorkshopPage({ params }) {
           <div className="lg:col-span-1">
             <div className="bg-gray-800 rounded-lg p-6 sticky top-24">
               <h2 className="text-2xl font-bold text-center mb-4">Register Now</h2>
-              {/* --- UPDATE: Venue is now displayed --- */}
               <p className="text-center text-gray-400 mb-6">{venue || 'Venue to be announced'}</p>
               <div className="space-y-3 mb-6">
                 {ticket_tiers.map(tier => {
@@ -214,27 +216,29 @@ export default function WorkshopPage({ params }) {
                   const isSoldOut = remainingTickets <= 0;
                   const isSelected = selectedTier?.id === tier.id;
                   return (
-                    <label key={tier.id} className={`flex items-center p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-700'} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
-                      <input type="radio" name="tier" disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setQuantity(1); }} className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"/>
-                      <div className="ml-4 flex-grow">
-                        <span className="font-bold">{tier.name}</span>
-                        <span className="ml-2 text-gray-400">(₹{tier.price})</span>
+                    <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
+                      <div className="flex items-center">
+                        <input type="radio" id={`tier_${tier.id}`} name="tier" disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setQuantity(1); }} className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"/>
+                        <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
+                          <span className="font-bold">{tier.name}</span>
+                          <span className="ml-2 text-gray-400">(₹{tier.price})</span>
+                        </label>
+                        {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
                       </div>
-                      {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
-                    </label>
+                       {/* --- UPDATE: Conditionally show quantity selector --- */}
+                       {isSelected && !isSoldOut && !tier.is_online_access && (
+                        <div className="mt-4 flex items-center justify-center">
+                          <label className="mr-4">Quantity:</label>
+                          <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
+                          <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
+                          <button onClick={() => setQuantity(q => Math.min(remainingTickets, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
               
-              {selectedTier && (
-                <div className="mb-6 flex items-center justify-center">
-                  <label className="mr-4">Quantity:</label>
-                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
-                  <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
-                  <button onClick={() => setQuantity(q => Math.min(selectedTier.capacity - selectedTier.tickets_sold, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
-                </div>
-              )}
-
               <div className="mb-4">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">Email:</label>
                 <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-600"/>
@@ -242,7 +246,7 @@ export default function WorkshopPage({ params }) {
               </div>
 
               <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-500">
-                {isRzpReady ? (selectedTier ? `Register (${quantity} x ₹${selectedTier.price})` : 'Select a Tier') : 'Loading...'}
+                {isRzpReady ? (selectedTier ? `Register (${selectedTier.is_online_access ? 1 : quantity} x ₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading...'}
               </button>
             </div>
           </div>
