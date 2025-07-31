@@ -21,10 +21,10 @@ const mux = new Mux({
 });
 
 // Helper function to generate a JWT-signed URL
-const generateSecureMuxUrl = async (assetId: string, expirationDuration: string) => {
-  if (!assetId) return null;
+const generateSecureMuxUrl = async (livestreamId: string, expirationDuration: string) => {
+  if (!livestreamId) return null;
   try {
-    const playbackId = await mux.video.assets.createPlaybackId(assetId, { policy: 'signed' });
+    const playbackId = await mux.video.liveStreams.createPlaybackId(livestreamId, { policy: 'signed' });
     
     const token = await mux.jwt.signPlaybackId(playbackId.id, {
       keyId: process.env.MUX_SIGNING_KEY_ID,
@@ -37,7 +37,7 @@ const generateSecureMuxUrl = async (assetId: string, expirationDuration: string)
     return { playbackId: playbackId.id, token: token };
 
   } catch (error) {
-    console.error(`Error generating Mux URL for asset ${assetId}:`, error);
+    console.error(`Error generating Mux URL for asset ${livestreamId}:`, error);
     return null;
   }
 };

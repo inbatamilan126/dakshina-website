@@ -6,11 +6,8 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function WatchPage() {
-  // Get the playback ID from the URL path
   const params = useParams();
   const playbackId = params.token;
-
-  // Get the secure JWT from the URL query parameter
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -26,9 +23,9 @@ export default function WatchPage() {
         {playbackId && token ? (
           <MuxPlayer
             playbackId={playbackId}
-            // --- FINAL FIX: Pass the raw token directly without the 'jwt:' prefix ---
             playbackToken={token}
-            streamType="on-demand" // Use "on-demand" for VOD assets, "live" for live streams
+            // --- CRUCIAL FIX: Changed streamType to 'live' ---
+            streamType="live" 
             className="w-full h-full"
             autoPlay={true}
           />
