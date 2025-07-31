@@ -89,29 +89,30 @@ export default function WorkshopPage({ params }) {
     setShowConfirmModal(false);
 
     try {
+      const purchaseQuantity = selectedTier.is_online_access ? 1 : quantity;
       const orderRes = await fetch('http://localhost:1337/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: selectedTier.price * quantity * 100,
+          amount: selectedTier.price * purchaseQuantity * 100,
           workshopId: workshop.id,
           workshopSlug: workshop.slug,
           tierName: selectedTier.name,
-          quantity: quantity,
+          quantity: purchaseQuantity,
         }),
       });
 
       if (!orderRes.ok) throw new Error('Failed to create Razorpay order.');
       const orderDetails = await orderRes.json();
       
-      const razorpayKeyId = 'rzp_test_tn3D5B6Bh0HPcH'; // Replace with your key
+      const razorpayKeyId = 'rzp_test_zL8bY0q0h5k8QJ'; // Replace with your key
 
       const options = {
         key: razorpayKeyId,
         amount: orderDetails.amount,
         currency: "INR",
         name: "The Dakshina Dance Repertory",
-        description: `${quantity} x Ticket(s): ${selectedTier.name} for ${workshop.title}`,
+        description: `${purchaseQuantity} x Ticket(s): ${selectedTier.name} for ${workshop.title}`,
         image: "https://placehold.co/100x100/16a34a/white?text=D",
         order_id: orderDetails.id,
         
@@ -139,7 +140,7 @@ export default function WorkshopPage({ params }) {
         notes: { 
           eventCode: workshop.slug,
           tierName: selectedTier.name,
-          quantity: quantity,
+          quantity: purchaseQuantity,
         },
         theme: { color: "#16a34a" }
       };
@@ -161,12 +162,15 @@ export default function WorkshopPage({ params }) {
     return <main className="flex min-h-screen items-center justify-center bg-gray-900 text-white"><h1 className="text-4xl">Workshop Not Found</h1></main>;
   }
 
-  const { title, description, banner_image, instructor, schedule, ticket_tiers, venue, start_date } = workshop;
+  const { title, description, banner_image, instructor, schedule, ticket_tiers, venue, start_date, end_date } = workshop;
   const bannerUrl = strapiUrl + banner_image.url;
   const instructorName = instructor?.name || 'TBA';
   
-  // --- NEW LOGIC: Check if the workshop has already started ---
-  const isPast = new Date(start_date) < new Date();
+  // --- NEW LOGIC: Check the workshop's status against the current time ---
+  const now = new Date();
+  const hasStarted = new Date(start_date) < now;
+  // Consider the end of the day for the end date
+  const hasEnded = new Date(end_date).setHours(23, 59, 59, 999) < now;
 
   return (
     <>
@@ -207,8 +211,18 @@ export default function WorkshopPage({ params }) {
 
           {/* Right Column: Booking */}
           <div className="lg:col-span-1">
-            {/* --- UPDATE: Conditionally render the booking section --- */}
-            {!isPast ? (
+            {/* --- UPDATE: Conditionally render the booking section based on dates --- */}
+            {hasEnded ? (
+              <div className="bg-gray-800 rounded-lg p-6 text-center sticky top-24">
+                <h2 className="text-2xl font-bold">Registration Closed</h2>
+                <p className="text-gray-400 mt-2">This workshop has already concluded.</p>
+              </div>
+            ) : hasStarted ? (
+              <div className="bg-gray-800 rounded-lg p-6 text-center sticky top-24">
+                <h2 className="text-2xl font-bold">Registration Closed</h2>
+                <p className="text-gray-400 mt-2">This workshop is currently in progress.</p>
+              </div>
+            ) : (
               <div className="bg-gray-800 rounded-lg p-6 sticky top-24">
                 <h2 className="text-2xl font-bold text-center mb-4">Register Now</h2>
                 <p className="text-center text-gray-400 mb-6">{venue || 'Venue to be announced'}</p>
@@ -218,27 +232,28 @@ export default function WorkshopPage({ params }) {
                     const isSoldOut = remainingTickets <= 0;
                     const isSelected = selectedTier?.id === tier.id;
                     return (
-                      <label key={tier.id} className={`flex items-center p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-700'} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
-                        <input type="radio" name="tier" disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setQuantity(1); }} className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"/>
-                        <div className="ml-4 flex-grow">
-                          <span className="font-bold">{tier.name}</span>
-                          <span className="ml-2 text-gray-400">(₹{tier.price})</span>
+                      <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
+                        <div className="flex items-center">
+                          <input type="radio" id={`tier_${tier.id}`} name="tier" disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setQuantity(1); }} className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"/>
+                          <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
+                            <span className="font-bold">{tier.name}</span>
+                            <span className="ml-2 text-gray-400">(₹{tier.price})</span>
+                          </label>
+                          {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
                         </div>
-                        {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
-                      </label>
+                         {isSelected && !isSoldOut && !tier.is_online_access && (
+                          <div className="mt-4 flex items-center justify-center">
+                            <label className="mr-4">Quantity:</label>
+                            <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
+                            <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
+                            <button onClick={() => setQuantity(q => Math.min(remainingTickets, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
                 
-                {selectedTier && !selectedTier.is_online_access && (
-                  <div className="mb-6 flex items-center justify-center">
-                    <label className="mr-4">Quantity:</label>
-                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
-                    <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
-                    <button onClick={() => setQuantity(q => Math.min(selectedTier.capacity - selectedTier.tickets_sold, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
-                  </div>
-                )}
-
                 <div className="mb-4">
                   <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">Email:</label>
                   <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-600"/>
@@ -248,11 +263,6 @@ export default function WorkshopPage({ params }) {
                 <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-500">
                   {isRzpReady ? (selectedTier ? `Register (${selectedTier.is_online_access ? 1 : quantity} x ₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading...'}
                 </button>
-              </div>
-            ) : (
-              <div className="bg-gray-800 rounded-lg p-6 text-center">
-                <h2 className="text-2xl font-bold">Registration Closed</h2>
-                <p className="text-gray-400 mt-2">This workshop has already concluded.</p>
               </div>
             )}
           </div>

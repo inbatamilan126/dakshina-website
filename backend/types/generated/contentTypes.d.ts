@@ -701,7 +701,7 @@ export interface ApiWorkshopWorkshop extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Blocks;
-    end_date: Schema.Attribute.Date;
+    end_date: Schema.Attribute.DateTime;
     instructor: Schema.Attribute.Relation<
       'oneToOne',
       'api::team-member.team-member'
@@ -715,7 +715,7 @@ export interface ApiWorkshopWorkshop extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     schedule: Schema.Attribute.Component<'sessions.session-detail', true>;
     slug: Schema.Attribute.UID<'title'>;
-    start_date: Schema.Attribute.Date;
+    start_date: Schema.Attribute.DateTime;
     ticket_tiers: Schema.Attribute.Component<'ticket-tiers.ticket-tier', true>;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;

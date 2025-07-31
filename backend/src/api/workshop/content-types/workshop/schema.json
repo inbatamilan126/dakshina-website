@@ -23,10 +23,10 @@
       "target": "api::team-member.team-member"
     },
     "start_date": {
-      "type": "date"
+      "type": "datetime"
     },
     "end_date": {
-      "type": "date"
+      "type": "datetime"
     },
     "banner_image": {
       "type": "media",
