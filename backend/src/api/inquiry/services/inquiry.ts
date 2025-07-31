@@ -1,0 +1,5 @@
+/**
+ * inquiry service
+ */
+
+export default () => ({});
