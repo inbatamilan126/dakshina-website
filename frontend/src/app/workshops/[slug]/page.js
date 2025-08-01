@@ -105,7 +105,7 @@ export default function WorkshopPage({ params }) {
       if (!orderRes.ok) throw new Error('Failed to create Razorpay order.');
       const orderDetails = await orderRes.json();
       
-      const razorpayKeyId = 'rzp_test_zL8bY0q0h5k8QJ'; // Replace with your key
+      const razorpayKeyId = 'rzp_test_tn3D5B6Bh0HPcH'; // Replace with your key
 
       const options = {
         key: razorpayKeyId,
@@ -142,7 +142,7 @@ export default function WorkshopPage({ params }) {
           tierName: selectedTier.name,
           quantity: purchaseQuantity,
         },
-        theme: { color: "#16a34a" }
+        theme: { color: "#acae2c" }
       };
 
       const rzp = new window.Razorpay(options);
@@ -155,21 +155,19 @@ export default function WorkshopPage({ params }) {
   };
 
   if (isLoading) {
-    return <main className="flex min-h-screen items-center justify-center bg-gray-900 text-white"><h1 className="text-4xl">Loading Workshop...</h1></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Loading Workshop...</h1></main>;
   }
 
   if (!workshop) {
-    return <main className="flex min-h-screen items-center justify-center bg-gray-900 text-white"><h1 className="text-4xl">Workshop Not Found</h1></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Workshop Not Found</h1></main>;
   }
 
   const { title, description, banner_image, instructor, schedule, ticket_tiers, venue, start_date, end_date } = workshop;
   const bannerUrl = strapiUrl + banner_image.url;
   const instructorName = instructor?.name || 'TBA';
   
-  // --- NEW LOGIC: Check the workshop's status against the current time ---
   const now = new Date();
   const hasStarted = new Date(start_date) < now;
-  // Consider the end of the day for the end date
   const hasEnded = new Date(end_date).setHours(23, 59, 59, 999) < now;
 
   return (
@@ -181,11 +179,11 @@ export default function WorkshopPage({ params }) {
           onCancel={() => setShowConfirmModal(false)}
         />
       )}
-      <main className="min-h-screen bg-gray-900 text-white">
+      <main className="min-h-screen bg-[#28401c] text-[#dcc7b0]">
         <div className="relative w-full h-96">
           <Image src={bannerUrl} alt={title} fill sizes="100vw" style={{objectFit: 'cover'}} priority />
           <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-            <h1 className="text-6xl font-serif font-bold text-center">{title}</h1>
+            <h1 className="text-6xl font-serif font-bold text-center text-white">{title}</h1>
           </div>
         </div>
 
@@ -197,11 +195,11 @@ export default function WorkshopPage({ params }) {
                 <p key={index} className="mb-4">{block.children.map(child => child.text).join('')}</p>
               ))}
             </div>
-            <h2 className="text-3xl font-bold text-green-400 mt-12 mb-6">Schedule</h2>
+            <h2 className="text-3xl font-bold text-[#acae2c] mt-12 mb-6">Schedule</h2>
             <div className="space-y-4">
               {schedule.map(session => (
-                <div key={session.id} className="bg-gray-800 p-4 rounded-lg">
-                  <p className="font-bold text-white">{formatDate(session.date)}</p>
+                <div key={session.id} className="bg-[#55682f] p-4 rounded-lg">
+                  <p className="font-bold text-[#dcc7b0]">{formatDate(session.date)}</p>
                   <p className="text-gray-300">{formatTime(session.start_time)} - {formatTime(session.end_time)}</p>
                   {session.topic && <p className="text-gray-400 mt-1 italic">Topic: {session.topic}</p>}
                 </div>
@@ -211,19 +209,18 @@ export default function WorkshopPage({ params }) {
 
           {/* Right Column: Booking */}
           <div className="lg:col-span-1">
-            {/* --- UPDATE: Conditionally render the booking section based on dates --- */}
             {hasEnded ? (
-              <div className="bg-gray-800 rounded-lg p-6 text-center sticky top-24">
+              <div className="bg-[#55682f] rounded-lg p-6 text-center sticky top-24">
                 <h2 className="text-2xl font-bold">Registration Closed</h2>
                 <p className="text-gray-400 mt-2">This workshop has already concluded.</p>
               </div>
             ) : hasStarted ? (
-              <div className="bg-gray-800 rounded-lg p-6 text-center sticky top-24">
+              <div className="bg-[#55682f] rounded-lg p-6 text-center sticky top-24">
                 <h2 className="text-2xl font-bold">Registration Closed</h2>
                 <p className="text-gray-400 mt-2">This workshop is currently in progress.</p>
               </div>
             ) : (
-              <div className="bg-gray-800 rounded-lg p-6 sticky top-24">
+              <div className="bg-[#55682f] rounded-lg p-6 sticky top-24">
                 <h2 className="text-2xl font-bold text-center mb-4">Register Now</h2>
                 <p className="text-center text-gray-400 mb-6">{venue || 'Venue to be announced'}</p>
                 <div className="space-y-3 mb-6">
@@ -232,14 +229,14 @@ export default function WorkshopPage({ params }) {
                     const isSoldOut = remainingTickets <= 0;
                     const isSelected = selectedTier?.id === tier.id;
                     return (
-                      <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
+                      <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-[#acae2c] text-black' : 'bg-[#28401c] hover:bg-opacity-70'}`}>
                         <div className="flex items-center">
-                          <input type="radio" id={`tier_${tier.id}`} name="tier" disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setQuantity(1); }} className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"/>
+                          <input type="radio" id={`tier_${tier.id}`} name="tier" disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setQuantity(1); }} className="h-5 w-5 text-[#acae2c] bg-gray-700 border-gray-500"/>
                           <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
                             <span className="font-bold">{tier.name}</span>
                             <span className="ml-2 text-gray-400">(₹{tier.price})</span>
                           </label>
-                          {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
+                          {isSoldOut && <span className="text-[#9b0e0e] font-bold">Sold Out</span>}
                         </div>
                          {isSelected && !isSoldOut && !tier.is_online_access && (
                           <div className="mt-4 flex items-center justify-center">
@@ -260,7 +257,7 @@ export default function WorkshopPage({ params }) {
                   {emailError && <p className="text-red-500 mt-2 text-sm">{emailError}</p>}
                 </div>
 
-                <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-500">
+                <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="w-full bg-[#acae2c] text-gray-900 font-bold py-3 px-6 rounded-lg hover:bg-[#c98400] disabled:bg-gray-500">
                   {isRzpReady ? (selectedTier ? `Register (${selectedTier.is_online_access ? 1 : quantity} x ₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading...'}
                 </button>
               </div>
@@ -276,13 +273,13 @@ export default function WorkshopPage({ params }) {
 function ConfirmationModal({ email, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
-        <h3 className="text-2xl font-bold text-white mb-4">Confirm Your Email</h3>
+      <div className="bg-[#55682f] rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
+        <h3 className="text-2xl font-bold text-[#dcc7b0] mb-4">Confirm Your Email</h3>
         <p className="text-gray-300 mb-6">Your confirmation will be sent to this address. Please make sure it is correct.</p>
-        <p className="bg-gray-900 text-green-400 font-mono p-3 rounded-md mb-8 break-words">{email}</p>
+        <p className="bg-[#28401c] text-[#acae2c] font-mono p-3 rounded-md mb-8 break-words">{email}</p>
         <div className="flex justify-between items-center gap-4">
           <button onClick={onCancel} className="w-full text-gray-300 font-bold py-3 px-4 rounded-lg hover:bg-gray-700">Edit</button>
-          <button onClick={onConfirm} className="w-full bg-green-600 text-white font-bold py-3 px-4 text-lg rounded-lg hover:bg-green-700">Confirm & Pay</button>
+          <button onClick={onConfirm} className="w-full bg-[#acae2c] text-gray-900 font-bold py-3 px-4 text-lg rounded-lg hover:bg-[#c98400]">Confirm & Pay</button>
         </div>
       </div>
     </div>

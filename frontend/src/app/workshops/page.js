@@ -5,7 +5,6 @@ import Link from 'next/link';
 // This function fetches all workshops data.
 async function getWorkshops() {
   try {
-    // We sort by start_date descending to get the newest first.
     const res = await fetch('http://localhost:1337/api/workshops?sort=start_date:desc&populate=*', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch data from API');
     const responseData = await res.json();
@@ -34,7 +33,7 @@ function formatDateRange(startDateString, endDateString) {
   return `${start} - ${end}`;
 }
 
-// Reusable Workshop Card Component
+// Reusable Workshop Card Component with new colors
 function WorkshopCard({ workshop }) {
   const strapiUrl = 'http://localhost:1337';
 
@@ -43,11 +42,11 @@ function WorkshopCard({ workshop }) {
   }
 
   const { title, slug, start_date, end_date, instructor, banner_image, venue } = workshop;
-  const imageUrl = strapiUrl + banner_image.url;
+  const imageUrl = strapiUrl + workshop.banner_image.url;
   const instructorName = instructor?.name || 'TBA';
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+    <div className="bg-[#55682f] rounded-lg shadow-lg overflow-hidden flex flex-col">
       <div className="relative w-full h-60">
         <Image
           src={imageUrl}
@@ -58,10 +57,10 @@ function WorkshopCard({ workshop }) {
         />
       </div>
       <div className="p-6 flex flex-col flex-grow">
-        <p className="text-sm text-green-400 font-semibold tracking-wider uppercase">
+        <p className="text-sm text-[#c98400] font-semibold tracking-wider uppercase">
           {formatDateRange(start_date, end_date)}
         </p>
-        <h2 className="text-2xl font-serif font-bold mt-2 mb-3 text-white">
+        <h2 className="text-2xl font-serif font-bold mt-2 mb-3 text-[#dcc7b0]">
           {title}
         </h2>
         <p className="text-gray-300 mb-2">Venue: {venue || 'TBA'}</p>
@@ -69,9 +68,9 @@ function WorkshopCard({ workshop }) {
         <div className="mt-auto">
           <Link 
             href={`/workshops/${slug}`} 
-            className="inline-block bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-green-700"
+            className="inline-block bg-[#c98400] text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#acae2c]"
           >
-            Learn More
+            Learn More & Register
           </Link>
         </div>
       </div>
@@ -85,21 +84,19 @@ export default async function WorkshopsPage() {
   const allWorkshops = await getWorkshops();
   const now = new Date();
 
-  // --- NEW LOGIC: Automatically separate workshops ---
   const upcomingWorkshops = allWorkshops.filter(ws => new Date(ws.start_date) >= now);
   const pastWorkshops = allWorkshops.filter(ws => new Date(ws.start_date) < now);
 
   return (
-    <main className="min-h-screen flex-col items-center p-8 md:p-24 bg-gray-900 text-white">
+    <main className="min-h-screen flex-col items-center p-8 md:p-24 bg-[#28401c] text-[#dcc7b0]">
       <div className="w-full max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-serif font-bold">Workshops & Intensives</h1>
           <p className="text-lg text-gray-400 mt-4">Deepen your practice with our immersive workshops led by renowned artists.</p>
         </div>
         
-        {/* Upcoming Workshops Section */}
         <section>
-          <h2 className="text-3xl font-semibold border-b-2 border-green-500 pb-4 mb-8">Upcoming Workshops</h2>
+          <h2 className="text-3xl font-semibold border-b-2 border-[#acae2c] pb-4 mb-8">Upcoming Workshops</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {upcomingWorkshops.length > 0 ? (
               upcomingWorkshops.map(workshop => <WorkshopCard key={workshop.id} workshop={workshop} />)
@@ -109,9 +106,8 @@ export default async function WorkshopsPage() {
           </div>
         </section>
 
-        {/* Past Workshops Section */}
         <section className="mt-20">
-          <h2 className="text-3xl font-semibold border-b-2 border-green-500 pb-4 mb-8">Past Workshops</h2>
+          <h2 className="text-3xl font-semibold border-b-2 border-[#acae2c] pb-4 mb-8">Past Workshops</h2>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {pastWorkshops.length > 0 ? (
               pastWorkshops.map(workshop => <WorkshopCard key={workshop.id} workshop={workshop} />)

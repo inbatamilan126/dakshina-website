@@ -4,7 +4,6 @@ import Link from 'next/link';
 // This function fetches all events data.
 async function getAllEvents() {
   try {
-    // We sort by date descending to get the newest first.
     const res = await fetch('http://localhost:1337/api/events?sort=date:desc&populate[artistic_work][on][links.production-link][populate]=production&populate[artistic_work][on][links.solo-link][populate]=solo', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch data from API');
     const responseData = await res.json();
@@ -45,7 +44,7 @@ export default async function EventsArchivePage() {
   const years = Object.keys(eventsByYear).sort((a, b) => b - a); // Sort years in descending order
 
   return (
-    <main className="min-h-screen flex-col items-center p-8 md:p-24 bg-gray-900 text-white">
+    <main className="min-h-screen flex-col items-center p-8 md:p-24 bg-[#28401c] text-[#dcc7b0]">
       <div className="w-full max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-serif font-bold">Past Events Archive</h1>
@@ -55,7 +54,7 @@ export default async function EventsArchivePage() {
         {years.length > 0 ? (
           years.map(year => (
             <section key={year} className="mb-12">
-              <h2 className="text-4xl font-serif font-bold text-green-400 border-b border-gray-700 pb-4 mb-6">{year}</h2>
+              <h2 className="text-4xl font-serif font-bold text-[#acae2c] border-b border-gray-700 pb-4 mb-6">{year}</h2>
               <ul className="space-y-4">
                 {eventsByYear[year].map(event => {
                   const component = event.artistic_work?.[0];
@@ -71,10 +70,10 @@ export default async function EventsArchivePage() {
                   }
 
                   return (
-                    <li key={event.id} className="bg-gray-800 p-4 rounded-lg transition-colors hover:bg-gray-700">
+                    <li key={event.id} className="bg-[#55682f] p-4 rounded-lg transition-colors hover:bg-[#686c24]">
                       <Link href={linkUrl} className="flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div>
-                          <p className="font-bold text-xl text-white">{title}</p>
+                          <p className="font-bold text-xl text-[#dcc7b0]">{title}</p>
                           <p className="text-gray-400">{event.venue}</p>
                         </div>
                         <p className="text-gray-500 mt-2 md:mt-0">{formatDate(event.date)}</p>

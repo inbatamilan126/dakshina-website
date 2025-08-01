@@ -37,7 +37,6 @@ export default function SoloPage({ params }) {
       if (!params.slug) return;
       setIsLoading(true);
       try {
-        // --- 1. Fetch the Solo Details ---
         const soloRes = await fetch(`http://localhost:1337/api/solos?filters[slug][$eq]=${params.slug}&populate=*`);
         if (!soloRes.ok) throw new Error('Failed to fetch solo performance');
         const soloData = await soloRes.json();
@@ -45,7 +44,6 @@ export default function SoloPage({ params }) {
         setSolo(currentSolo);
 
         if (currentSolo) {
-          // --- 2. Fetch Upcoming Events and filter for THIS Solo ---
           const now = new Date().toISOString();
           const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][populate]=*&populate=ticket_tiers`);
           if (!eventsRes.ok) throw new Error('Failed to fetch events');
@@ -96,13 +94,11 @@ export default function SoloPage({ params }) {
   };
   
   const proceedToPayment = async () => {
-    // This uses the same universal backend controller, so the logic is very similar
     if (!isRzpReady || !window.Razorpay || !selectedTier || !selectedEvent) return;
     setShowConfirmModal(false);
 
     try {
       const purchaseQuantity = selectedTier.is_online_access ? 1 : quantity;
-
       const orderRes = await fetch('http://localhost:1337/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,7 +117,7 @@ export default function SoloPage({ params }) {
       }
       const orderDetails = await orderRes.json();
       
-      const razorpayKeyId = 'rzp_test_zL8bY0q0h5k8QJ'; // Replace with your key
+      const razorpayKeyId = 'rzp_test_tn3D5B6Bh0HPcH'; // Replace with your key
 
       const options = {
         key: razorpayKeyId,
@@ -158,7 +154,7 @@ export default function SoloPage({ params }) {
           tierName: selectedTier.name,
           quantity: purchaseQuantity,
         },
-        theme: { color: "#16a34a" }
+        theme: { color: "#acae2c" }
       };
 
       const rzp = new window.Razorpay(options);
@@ -171,11 +167,11 @@ export default function SoloPage({ params }) {
   };
 
   if (isLoading) {
-    return <main className="flex min-h-screen items-center justify-center bg-gray-900 text-white"><h1 className="text-4xl">Loading Performance...</h1></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Loading Performance...</h1></main>;
   }
 
   if (!solo) {
-    return <main className="flex min-h-screen items-center justify-center bg-gray-900 text-white"><h1 className="text-4xl">Solo Performance Not Found</h1></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Solo Performance Not Found</h1></main>;
   }
 
   const { title, short_overview, banner_desktop } = solo;
@@ -190,40 +186,40 @@ export default function SoloPage({ params }) {
           onCancel={() => setShowConfirmModal(false)}
         />
       )}
-      <main className="min-h-screen bg-gray-900 text-white">
+      <main className="min-h-screen bg-[#28401c] text-[#dcc7b0]">
         <div className="relative w-full h-96">
           <Image src={bannerUrl} alt={title} fill sizes="100vw" style={{objectFit: 'cover'}} priority />
           <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-            <h1 className="text-6xl font-serif font-bold text-center">{title}</h1>
+            <h1 className="text-6xl font-serif font-bold text-center text-white">{title}</h1>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto p-8">
           {upcomingEvents.length > 0 && (
-            <div className="bg-gray-800 rounded-lg p-8 mb-12">
-              <h2 className="text-3xl font-bold text-green-400 mb-6 text-center">Book Your Tickets</h2>
+            <div className="bg-[#55682f] rounded-lg p-8 mb-12">
+              <h2 className="text-3xl font-bold text-[#acae2c] mb-6 text-center">Book Your Tickets</h2>
               {upcomingEvents.map(event => (
                 <div key={event.id} className="mb-8">
-                  <div className="bg-gray-700 p-4 rounded-t-lg">
-                    <p className="text-xl font-bold">{formatDate(event.date)}</p>
+                  <div className="bg-[#686c24] p-4 rounded-t-lg">
+                    <p className="text-xl font-bold text-[#dcc7b0]">{formatDate(event.date)}</p>
                     <p className="text-gray-300">{event.venue}</p>
                   </div>
-                  <div className="bg-gray-700 p-4 rounded-b-lg border-t border-gray-600">
-                    <h3 className="text-lg font-semibold mb-3">Select Ticket Tier:</h3>
+                  <div className="bg-[#686c24] p-4 rounded-b-lg border-t border-gray-700">
+                    <h3 className="text-lg font-semibold mb-3 text-[#dcc7b0]">Select Ticket Tier:</h3>
                     <div className="space-y-3">
                       {[...event.ticket_tiers].sort((a, b) => a.price - b.price).map(tier => {
                         const remainingTickets = tier.capacity - tier.tickets_sold;
                         const isSoldOut = remainingTickets <= 0;
                         const isSelected = selectedTier?.id === tier.id && selectedEvent?.id === event.id;
                         return (
-                          <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-green-800 ring-2 ring-green-400' : 'bg-gray-900'}`}>
+                          <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-[#acae2c] text-black' : 'bg-[#28401c] hover:bg-opacity-70'}`}>
                             <div className="flex items-center">
-                              <input type="radio" id={`tier_${tier.id}`} name={`event_${event.id}_tier`} disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setSelectedEvent(event); setQuantity(1); }} className="h-5 w-5 text-green-600 bg-gray-700 border-gray-500"/>
+                              <input type="radio" id={`tier_${tier.id}`} name={`event_${event.id}_tier`} disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setSelectedEvent(event); setQuantity(1); }} className="h-5 w-5 text-[#acae2c] bg-gray-700 border-gray-500"/>
                               <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
                                 <span className="font-bold">{tier.name}</span>
                                 <span className="ml-2 text-gray-400">(₹{tier.price})</span>
                               </label>
-                              {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
+                              {isSoldOut && <span className="text-[#9b0e0e] font-bold">Sold Out</span>}
                             </div>
                             {isSelected && !isSoldOut && !tier.is_online_access && (
                               <div className="mt-4 flex items-center justify-center">
@@ -246,7 +242,7 @@ export default function SoloPage({ params }) {
                 {emailError && <p className="text-red-500 mt-2 text-center">{emailError}</p>}
               </div>
               <div className="mt-6 text-center">
-                <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="inline-block bg-green-600 text-white font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="inline-block bg-[#acae2c] text-gray-900 font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-[#c98400] disabled:bg-gray-500 disabled:cursor-not-allowed">
                   {isRzpReady ? (selectedTier ? `Book ${selectedTier.is_online_access ? 1 : quantity} Ticket(s) (₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading Payment...'}
                 </button>
               </div>
@@ -268,13 +264,13 @@ export default function SoloPage({ params }) {
 function ConfirmationModal({ email, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
-        <h3 className="text-2xl font-bold text-white mb-4">Confirm Your Email</h3>
+      <div className="bg-[#55682f] rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
+        <h3 className="text-2xl font-bold text-[#dcc7b0] mb-4">Confirm Your Email</h3>
         <p className="text-gray-300 mb-6">Your ticket will be sent to this address. Please make sure it is correct.</p>
-        <p className="bg-gray-900 text-green-400 font-mono p-3 rounded-md mb-8 break-words">{email}</p>
+        <p className="bg-[#28401c] text-[#acae2c] font-mono p-3 rounded-md mb-8 break-words">{email}</p>
         <div className="flex justify-between items-center gap-4">
           <button onClick={onCancel} className="w-full text-gray-300 font-bold py-3 px-4 rounded-lg hover:bg-gray-700">Edit</button>
-          <button onClick={onConfirm} className="w-full bg-green-600 text-white font-bold py-3 px-4 text-lg rounded-lg hover:bg-green-700">Confirm & Pay</button>
+          <button onClick={onConfirm} className="w-full bg-[#acae2c] text-gray-900 font-bold py-3 px-4 text-lg rounded-lg hover:bg-[#c98400]">Confirm & Pay</button>
         </div>
       </div>
     </div>

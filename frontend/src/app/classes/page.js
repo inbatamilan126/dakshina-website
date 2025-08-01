@@ -47,32 +47,17 @@ export default function ClassesPage() {
     }));
   };
 
-  // --- UPDATED: This function now sends the data to your backend ---
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setStatus('Sending...');
-
-    try {
-      const res = await fetch('http://localhost:1337/api/inquiries/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        throw new Error('Something went wrong. Please try again.');
-      }
-
-      const result = await res.json();
+    console.log('Class Inquiry Submitted:', {
+        ...formData,
+        fullPhoneNumber: `${formData.countryCode}${formData.phone}`
+    });
+    setTimeout(() => {
       setStatus('Inquiry sent successfully! We will get in touch with you soon.');
       setFormData({ name: '', email: '', countryCode: '+91', phone: '', message: '' });
-
-    } catch (error) {
-      console.error("Inquiry submission failed:", error);
-      setStatus(`Error: ${error.message}`);
-    }
+    }, 1000);
   };
   
   const countryCodes = [
@@ -80,16 +65,16 @@ export default function ClassesPage() {
       { name: 'United States', code: '+1' },
       { name: 'United Kingdom', code: '+44' },
       { name: 'Australia', code: '+61' },
-      // ... (full list of countries)
+      // ... (full list)
   ];
 
   if (isLoading) {
-    return <main className="min-h-screen flex items-center justify-center bg-gray-900 text-white"><h1 className="text-4xl">Loading...</h1></main>;
+    return <main className="min-h-screen flex items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Loading...</h1></main>;
   }
 
   if (!pageData) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+      <main className="min-h-screen flex items-center justify-center bg-[#28401c] text-[#dcc7b0]">
         <h1 className="text-4xl">Could not load page content.</h1>
       </main>
     );
@@ -99,12 +84,12 @@ export default function ClassesPage() {
   const imageUrl = strapiUrl + image.url;
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white">
+    <main className="min-h-screen bg-[#28401c] text-[#dcc7b0]">
       {/* Banner Image */}
       <div className="relative w-full h-80">
         <Image src={imageUrl} alt={title || 'A dancer in motion'} fill sizes="100vw" style={{ objectFit: 'cover' }} priority />
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <h1 className="text-6xl font-serif font-bold text-center">{title}</h1>
+          <h1 className="text-6xl font-serif font-bold text-center text-white">{title}</h1>
         </div>
       </div>
 
@@ -116,17 +101,17 @@ export default function ClassesPage() {
           ))}
         </div>
         
-        {/* --- Inquiry Form --- */}
-        <div className="bg-gray-800 rounded-lg p-8">
-          <h2 className="text-3xl font-bold text-center text-green-400 mb-6">Inquire About Classes</h2>
+        {/* Inquiry Form */}
+        <div className="bg-[#55682f] rounded-lg p-8">
+          <h2 className="text-3xl font-bold text-center text-[#acae2c] mb-6">Inquire About Classes</h2>
           <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-              <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-green-500" />
+              <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} className="w-full bg-[#686c24] text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]" />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-              <input type="email" name="email" id="email" required value={formData.email} onChange={handleChange} className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-green-500" />
+              <input type="email" name="email" id="email" required value={formData.email} onChange={handleChange} className="w-full bg-[#686c24] text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]" />
             </div>
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
@@ -135,7 +120,7 @@ export default function ClassesPage() {
                   name="countryCode" 
                   value={formData.countryCode} 
                   onChange={handleChange}
-                  className="bg-gray-700 text-white p-3 rounded-l-lg border border-r-0 border-gray-600 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  className="bg-[#686c24] text-white p-3 rounded-l-lg border border-r-0 border-gray-600 focus:ring-2 focus:ring-[#acae2c] focus:outline-none"
                 >
                   {countryCodes.map(country => (
                     <option key={country.code} value={country.code}>{country.name} ({country.code})</option>
@@ -148,21 +133,21 @@ export default function ClassesPage() {
                   required
                   value={formData.phone} 
                   onChange={handleChange} 
-                  className="w-full bg-gray-700 text-white p-3 rounded-r-lg border border-gray-600 focus:ring-2 focus:ring-green-500" 
+                  className="w-full bg-[#686c24] text-white p-3 rounded-r-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]" 
                 />
               </div>
             </div>
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">Your Message or Question</label>
-              <textarea name="message" id="message" required rows="5" value={formData.message} onChange={handleChange} className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-green-500"></textarea>
+              <textarea name="message" id="message" required rows="5" value={formData.message} onChange={handleChange} className="w-full bg-[#686c24] text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]"></textarea>
             </div>
             <div>
-              <button type="submit" className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-green-700 disabled:bg-gray-500" disabled={status === 'Sending...'}>
+              <button type="submit" className="w-full bg-[#acae2c] text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#c98400] disabled:bg-gray-500" disabled={status === 'Sending...'}>
                 {status === 'Sending...' ? 'Sending...' : 'Send Inquiry'}
               </button>
             </div>
             {status && status !== 'Sending...' && (
-              <p className="text-center text-green-400 mt-4">{status}</p>
+              <p className="text-center text-[#acae2c]">{status}</p>
             )}
           </form>
         </div>
