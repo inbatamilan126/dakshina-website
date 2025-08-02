@@ -75,17 +75,17 @@ function EventCard({ event }) {
   const imageUrl = strapiUrl + artisticWorkData.card_image.url;
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#55682f] rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-      <div className="md:w-1/3 w-full h-64 md:h-auto relative">
+    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] transition-transform duration-300">
+      <div className="md:w-1/3 w-full h-72 md:min-h-[300px] relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
         <Image src={imageUrl} alt={title || 'Event Image'} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }}/>
       </div>
-      <div className="md:w-2/3 p-6 flex flex-col justify-between">
+      <div className="md:w-2/3 p-6 md:p-8 flex flex-col justify-between">
         <div>
-          <p className="text-sm text-[#acae2c] font-semibold tracking-wider uppercase">{formatDate(event.date)}</p>
-          <h2 className="text-3xl font-serif font-bold mt-2 mb-4 text-[#dcc7b0]">{title}</h2>
+          <p className="text-sm md:text-base text-[#8A993F] font-semibold tracking-widest uppercase">{formatDate(event.date)}</p>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mt-3 mb-5 text-[#F5EFEA]">{title}</h2>
         </div>
         <div className="mt-4">
-          <Link href={linkUrl} className="inline-block bg-[#acae2c] text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#c98400]">
+          <Link href={linkUrl} className="inline-block bg-[#8A993F] text-[#111111] font-semibold text-sm md:text-base py-3 md:py-3.5 px-6 md:px-8 rounded-md transition-all duration-300 hover:bg-[#F5EFEA] hover:text-[#111111]">
             View Details & Tickets
           </Link>
         </div>
@@ -103,18 +103,18 @@ function WorkshopCard({ workshop }) {
     const imageUrl = strapiUrl + workshop.banner_image.url;
 
     return (
-        <div className="flex flex-col md:flex-row bg-[#55682f] rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-            <div className="md:w-1/3 w-full h-64 md:h-auto relative">
+        <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] transition-transform duration-300">
+            <div className="md:w-1/3 w-full h-72 md:min-h-[300px] relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
                 <Image src={imageUrl} alt={title || 'Workshop Image'} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }}/>
             </div>
-            <div className="md:w-2/3 p-6 flex flex-col justify-between">
+            <div className="md:w-2/3 p-6 md:p-8 flex flex-col justify-between">
                 <div>
-                    <p className="text-sm text-[#c98400] font-semibold tracking-wider uppercase">WORKSHOP</p>
-                    <p className="text-sm text-gray-400 mt-2">{formatDate(start_date)}</p>
-                    <h2 className="text-3xl font-serif font-bold mt-2 mb-4 text-[#dcc7b0]">{title}</h2>
+                    <p className="text-sm md:text-base text-[#c98400] font-bold tracking-widest uppercase mb-1">WORKSHOP</p>
+                    <p className="text-sm md:text-base text-gray-400">{formatDate(start_date)}</p>
+                    <h2 className="text-3xl md:text-4xl font-serif font-bold mt-3 mb-5 text-[#F5EFEA]">{title}</h2>
                 </div>
                 <div className="mt-4">
-                    <Link href={`/workshops/${slug}`} className="inline-block bg-[#c98400] text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#acae2c]">
+                    <Link href={`/workshops/${slug}`} className="inline-block bg-[#c98400] text-[#111111] font-semibold text-sm md:text-base py-3 md:py-3.5 px-6 md:px-8 rounded-md transition-all duration-300 hover:bg-[#F5EFEA] hover:text-[#111111]">
                         Learn More & Register
                     </Link>
                 </div>
@@ -128,12 +128,12 @@ export default async function Home() {
   const upcomingItems = await getUpcomingItems();
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-[#28401c] text-[#dcc7b0]">
+    <main className="flex min-h-screen flex-col items-center bg-[#111111] text-white">
 
       <Hero />
-      <h1 className="text-5xl font-serif font-bold mb-12">Upcoming Schedule</h1>
+      <h1 className="text-5xl font-serif font-bold mt-16 mb-12 text-[#F5EFEA]">Upcoming Schedule</h1>
       
-      <div className="w-full max-w-4xl space-y-8">
+      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-8">
         {Array.isArray(upcomingItems) && upcomingItems.length > 0 ? (
           upcomingItems.map((item) => {
             if (item.type === 'event') {
@@ -145,7 +145,7 @@ export default async function Home() {
             return null;
           })
         ) : (
-          <p className="text-gray-400 text-center text-lg">There are no upcoming events or workshops scheduled at this time. Please check back soon!</p>
+          <p className="text-[#DADADA] text-center text-lg">There are no upcoming events or workshops scheduled at this time. Please check back soon!</p>
         )}
       </div>
     </main>

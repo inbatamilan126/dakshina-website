@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.5.1",
+    "framer-motion": "^12.23.12",
     "next": "15.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0"
