@@ -128,7 +128,7 @@ export default async function Home() {
   const upcomingItems = await getUpcomingItems();
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-8 md:p-24 bg-[#28401c] text-[#dcc7b0]">
+    <main className="flex min-h-screen flex-col items-center bg-[#28401c] text-[#dcc7b0]">
 
       <Hero />
       <h1 className="text-5xl font-serif font-bold mb-12">Upcoming Schedule</h1>

@@ -5,19 +5,20 @@ export default function Hero() {
       <section className="relative w-full h-screen overflow-hidden">
         {/* Video Background */}
         <video
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute top-0 left-0 w-full h-full object-cover z-20"
           src="/hero-video.mp4"
           autoPlay
           loop
           muted
           playsInline
+          controls
         />
   
         {/* Dark Overlay */}
         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 z-10" />
   
         {/* Text Content */}
-        <div className="relative z-20 flex items-center justify-center h-full px-6 text-center">
+        <div className="relative z-20 flex items-top py-4 md:py-16 justify-center h-full px-6 text-center">
           <div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-white font-bold mb-4">
               The Dakshina Dance Repertory
