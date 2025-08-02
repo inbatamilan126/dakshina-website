@@ -1,6 +1,7 @@
 // File: frontend/src/app/page.js
 import Image from 'next/image';
 import Link from 'next/link';
+import Hero from '../components/Hero';
 
 // This function now fetches BOTH upcoming events and workshops
 async function getUpcomingItems() {
@@ -128,6 +129,8 @@ export default async function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-8 md:p-24 bg-[#28401c] text-[#dcc7b0]">
+
+      <Hero />
       <h1 className="text-5xl font-serif font-bold mb-12">Upcoming Schedule</h1>
       
       <div className="w-full max-w-4xl space-y-8">
