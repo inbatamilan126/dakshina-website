@@ -114,7 +114,7 @@ export default function ProductionPage({ params }) {
       }
       const orderDetails = await orderRes.json();
       
-      const razorpayKeyId = 'rzp_test_tn3D5B6Bh0HPcH'; // Replace with your key
+      const razorpayKeyId = 'rzp_test_zL8bY0q0h5k8QJ'; // Replace with your key
 
       const options = {
         key: razorpayKeyId,
@@ -151,7 +151,7 @@ export default function ProductionPage({ params }) {
           tierName: selectedTier.name,
           quantity: purchaseQuantity,
         },
-        theme: { color: "#acae2c" } // Using new accent color
+        theme: { color: "#8A993F" }
       };
 
       const rzp = new window.Razorpay(options);
@@ -164,11 +164,11 @@ export default function ProductionPage({ params }) {
   };
 
   if (isLoading) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Loading Production...</h1></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#111111] text-[#F5EFEA]"><h1 className="text-4xl">Loading Production...</h1></main>;
   }
 
   if (!production) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Production Not Found</h1></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-[#111111] text-[#F5EFEA]"><h1 className="text-4xl">Production Not Found</h1></main>;
   }
 
   const { title, description, banner_desktop } = production;
@@ -183,26 +183,26 @@ export default function ProductionPage({ params }) {
           onCancel={() => setShowConfirmModal(false)}
         />
       )}
-      <main className="min-h-screen bg-[#28401c] text-[#dcc7b0]">
+      <main className="min-h-screen bg-[#111111] text-[#F5EFEA] pt-20"> {/* Added top padding */}
         <div className="relative w-full h-96">
           <Image src={bannerUrl} alt={title} fill sizes="100vw" style={{objectFit: 'cover'}} priority />
-          <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+          <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center">
             <h1 className="text-6xl font-serif font-bold text-center text-white">{title}</h1>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto p-8">
           {upcomingEvents.length > 0 && (
-            <div className="bg-[#55682f] rounded-lg p-8 -mt-32 relative z-10 shadow-lg mb-12">
-              <h2 className="text-3xl font-bold text-[#acae2c] mb-6 text-center">Book Your Tickets</h2>
+            <div className="bg-[#1A1A1A] rounded-lg p-8 -mt-32 relative z-10 shadow-lg mb-12 border border-[#2A2A2A]">
+              <h2 className="text-3xl font-bold text-[#8A993F] mb-6 text-center">Book Your Tickets</h2>
               {upcomingEvents.map(event => (
                 <div key={event.id} className="mb-8">
-                  <div className="bg-[#686c24] p-4 rounded-t-lg">
-                    <p className="text-xl font-bold text-[#dcc7b0]">{formatDate(event.date)}</p>
-                    <p className="text-gray-300">{event.venue}</p>
+                  <div className="bg-[#111111] p-4 rounded-t-lg">
+                    <p className="text-xl font-bold text-[#F5EFEA]">{formatDate(event.date)}</p>
+                    <p className="text-[#DADADA]">{event.venue}</p>
                   </div>
-                  <div className="bg-[#686c24] p-4 rounded-b-lg border-t border-gray-700">
-                    <h3 className="text-lg font-semibold mb-3 text-[#dcc7b0]">Select Ticket Tier:</h3>
+                  <div className="bg-[#111111] p-4 rounded-b-lg border-t border-[#2A2A2A]">
+                    <h3 className="text-lg font-semibold mb-3 text-[#F5EFEA]">Select Ticket Tier:</h3>
                     <div className="space-y-3">
                       {[...event.ticket_tiers].sort((a, b) => a.price - b.price).map(tier => {
                         const remainingTickets = tier.capacity - tier.tickets_sold;
@@ -210,7 +210,7 @@ export default function ProductionPage({ params }) {
                         const isSelected = selectedTier?.id === tier.id && selectedEvent?.id === event.id;
 
                         return (
-                          <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-[#acae2c] text-black' : 'bg-[#28401c] hover:bg-opacity-70'}`}>
+                          <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-[#8A993F] text-black' : 'bg-[#2A2A2A] hover:bg-opacity-70'}`}>
                             <div className="flex items-center">
                               <input
                                 type="radio"
@@ -223,7 +223,7 @@ export default function ProductionPage({ params }) {
                                   setSelectedEvent(event);
                                   setQuantity(1);
                                 }}
-                                className="h-5 w-5 text-[#acae2c] bg-gray-700 border-gray-500 focus:ring-[#acae2c]"
+                                className="h-5 w-5 text-[#8A993F] bg-gray-700 border-gray-500 focus:ring-[#8A993F]"
                               />
                               <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
                                 <span className="font-bold">{tier.name}</span>
@@ -248,14 +248,14 @@ export default function ProductionPage({ params }) {
               ))}
               <div className="mt-8">
                 <label htmlFor="email" className="block text-lg font-medium text-gray-300 mb-2 text-center">Enter your email to book:</label>
-                <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="w-full max-w-md mx-auto bg-gray-900 text-white text-lg p-3 rounded-lg border border-gray-600 block"/>
+                <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="w-full max-w-md mx-auto bg-[#111111] text-white text-lg p-3 rounded-lg border border-[#2A2A2A] block"/>
                 {emailError && <p className="text-red-500 mt-2 text-center">{emailError}</p>}
               </div>
               <div className="mt-6 text-center">
                 <button 
                   onClick={handleBookClick}
                   disabled={!isRzpReady || !selectedTier}
-                  className="inline-block bg-[#acae2c] text-gray-900 font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-[#c98400] disabled:bg-gray-500 disabled:cursor-not-allowed"
+                  className="inline-block bg-[#8A993F] text-[#111111] font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-[#F5EFEA] disabled:bg-gray-500 disabled:cursor-not-allowed"
                 >
                   {isRzpReady ? (selectedTier ? `Book ${selectedTier.is_online_access ? 1 : quantity} Ticket(s) (₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading Payment...'}
                 </button>
@@ -263,7 +263,7 @@ export default function ProductionPage({ params }) {
             </div>
           )}
 
-          <div className="prose prose-invert max-w-none text-lg text-gray-300">
+          <div className="prose prose-invert max-w-none text-lg text-[#DADADA]">
              {description.map((block, index) => (
               <p key={index} className="mb-4">{block.children.map(child => child.text).join('')}</p>
             ))}
@@ -278,13 +278,13 @@ export default function ProductionPage({ params }) {
 function ConfirmationModal({ email, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#55682f] rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
-        <h3 className="text-2xl font-bold text-[#dcc7b0] mb-4">Confirm Your Email</h3>
-        <p className="text-gray-300 mb-6">Your ticket will be sent to this address. Please make sure it is correct.</p>
-        <p className="bg-[#28401c] text-[#acae2c] font-mono p-3 rounded-md mb-8 break-words">{email}</p>
+      <div className="bg-[#1A1A1A] rounded-lg shadow-xl p-8 max-w-sm w-full text-center border border-[#2A2A2A]">
+        <h3 className="text-2xl font-bold text-white mb-4">Confirm Your Email</h3>
+        <p className="text-[#DADADA] mb-6">Your ticket will be sent to this address. Please make sure it is correct.</p>
+        <p className="bg-[#111111] text-[#8A993F] font-mono p-3 rounded-md mb-8 break-words">{email}</p>
         <div className="flex justify-between items-center gap-4">
           <button onClick={onCancel} className="w-full text-gray-300 font-bold py-3 px-4 rounded-lg hover:bg-gray-700">Edit</button>
-          <button onClick={onConfirm} className="w-full bg-[#acae2c] text-gray-900 font-bold py-3 px-4 text-lg rounded-lg hover:bg-[#c98400]">Confirm & Pay</button>
+          <button onClick={onConfirm} className="w-full bg-[#8A993F] text-[#111111] font-bold py-3 px-4 text-lg rounded-lg hover:bg-[#F5EFEA]">Confirm & Pay</button>
         </div>
       </div>
     </div>
