@@ -57,7 +57,7 @@ function EventCard({ event }) {
   const imageUrl = strapiUrl + artisticWorkData.card_image.url;
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-[#2A2A2A]">
+    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-[1.02] hover:border-[#8A993F] border border-[#2A2A2A]">
       <div className="md:w-1/3 w-full h-64 md:h-auto relative">
         <Image
           src={imageUrl}

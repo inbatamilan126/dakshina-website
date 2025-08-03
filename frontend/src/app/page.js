@@ -75,7 +75,7 @@ function EventCard({ event }) {
   const imageUrl = strapiUrl + artisticWorkData.card_image.url;
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] transition-transform duration-300">
+    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] hover:border-[#8A993F] transition-transform duration-300">
       <div className="md:w-1/3 w-full h-72 md:min-h-[300px] relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
         <Image src={imageUrl} alt={title || 'Event Image'} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }}/>
       </div>
@@ -103,7 +103,7 @@ function WorkshopCard({ workshop }) {
     const imageUrl = strapiUrl + workshop.banner_image.url;
 
     return (
-        <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] transition-transform duration-300">
+        <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] hover:border-[#8A993F] transition-transform duration-300">
             <div className="md:w-1/3 w-full h-72 md:min-h-[300px] relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
                 <Image src={imageUrl} alt={title || 'Workshop Image'} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }}/>
             </div>
