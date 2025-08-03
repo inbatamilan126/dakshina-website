@@ -18,25 +18,25 @@ export default function WatchPage() {
   }, [playbackId, token]);
 
   return (
-    <main className="h-screen w-screen bg-black flex flex-col items-center justify-center text-white">
+    <main className="h-screen w-screen bg-[#111111] flex flex-col items-center justify-center text-[#F5EFEA]">
       <div className="w-full max-w-5xl aspect-video">
         {playbackId && token ? (
           <MuxPlayer
             playbackId={playbackId}
             playbackToken={token}
-            // --- CRUCIAL FIX: Changed streamType to 'live' ---
             streamType="live" 
             className="w-full h-full"
             autoPlay={true}
           />
         ) : (
-          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-            <p className="text-xl">Loading stream... Invalid or missing token.</p>
+          <div className="w-full h-full bg-[#1A1A1A] flex items-center justify-center rounded-lg">
+            <p className="text-xl text-[#DADADA]">Loading stream... Invalid or missing token.</p>
           </div>
         )}
       </div>
       <div className="mt-4 text-center">
-        <h1 className="text-2xl font-bold">The Dakshina Dance Repertory</h1>
+        <h1 className="text-2xl font-bold text-white">The Dakshina Dance Repertory</h1>
+        <p className="text-[#DADADA]">Live Performance</p>
       </div>
     </main>
   );
