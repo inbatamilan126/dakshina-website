@@ -37,6 +37,7 @@ export default function SoloPage({ params }) {
       if (!params.slug) return;
       setIsLoading(true);
       try {
+        // --- 1. Fetch the Solo Details ---
         const soloRes = await fetch(`http://localhost:1337/api/solos?filters[slug][$eq]=${params.slug}&populate=*`);
         if (!soloRes.ok) throw new Error('Failed to fetch solo performance');
         const soloData = await soloRes.json();
@@ -44,18 +45,22 @@ export default function SoloPage({ params }) {
         setSolo(currentSolo);
 
         if (currentSolo) {
+          // --- 2. Fetch ALL Upcoming Events ---
           const now = new Date().toISOString();
-          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][populate]=*&populate=ticket_tiers`);
+          // --- CRUCIAL FIX: Use the deep populate query to get all nested data ---
+          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*&populate=ticket_tiers`);
           if (!eventsRes.ok) throw new Error('Failed to fetch events');
           const eventsData = await eventsRes.json();
           const allUpcomingEvents = eventsData.data || [];
 
+          // --- 3. Filter events on the client-side (This is the robust fix) ---
           const relevantEvents = allUpcomingEvents.filter(event => 
             event.artistic_work?.[0]?.__component === 'links.solo-link' &&
             event.artistic_work?.[0]?.solo?.id === currentSolo.id
           );
-          relevantEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-          setUpcomingEvents(relevantEvents);
+          
+          const sortedEvents = relevantEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+          setUpcomingEvents(sortedEvents);
         }
       } catch (error) {
         console.error("Error fetching data:", error);

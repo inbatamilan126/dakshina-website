@@ -37,22 +37,33 @@ export default function ProductionPage({ params }) {
       if (!params.slug) return;
       setIsLoading(true);
       try {
+        // --- 1. Fetch the Production Details ---
         const prodRes = await fetch(`http://localhost:1337/api/productions?filters[slug][$eq]=${params.slug}&populate=*`);
+        if (!prodRes.ok) throw new Error('Failed to fetch production');
         const prodData = await prodRes.json();
         const currentProduction = prodData.data?.[0];
         setProduction(currentProduction);
 
         if (currentProduction) {
+          // --- 2. Fetch ALL Upcoming Events ---
           const now = new Date().toISOString();
-          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate=*`);
+          // This is the same deep-populate query from our homepage, with a simple date filter.
+          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*&populate=ticket_tiers`);
+          if (!eventsRes.ok) throw new Error('Failed to fetch events');
           const eventsData = await eventsRes.json();
           const allUpcomingEvents = eventsData.data || [];
 
-          const relevantEvents = allUpcomingEvents.filter(event => 
-            event.artistic_work?.[0]?.production?.id === currentProduction.id
-          );
-          relevantEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-          setUpcomingEvents(relevantEvents);
+          // --- 3. Filter events on the client-side (This is the robust fix) ---
+          const relevantEvents = allUpcomingEvents.filter(event => {
+            const component = event.artistic_work?.[0];
+            return (
+              component?.__component === 'links.production-link' &&
+              component.production?.id === currentProduction.id
+            );
+          });
+          
+          const sortedEvents = relevantEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+          setUpcomingEvents(sortedEvents);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -183,7 +194,7 @@ export default function ProductionPage({ params }) {
           onCancel={() => setShowConfirmModal(false)}
         />
       )}
-      <main className="min-h-screen bg-[#111111] text-[#F5EFEA] pt-20"> {/* Added top padding */}
+      <main className="min-h-screen bg-[#111111] text-[#F5EFEA] pt-20">
         <div className="relative w-full h-96">
           <Image src={bannerUrl} alt={title} fill sizes="100vw" style={{objectFit: 'cover'}} priority />
           <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center">
