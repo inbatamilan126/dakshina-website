@@ -60,21 +60,33 @@ export default function ClassesPage() {
     }, 1000);
   };
   
+  // --- UPDATED: Using country abbreviations for a cleaner look ---
   const countryCodes = [
-      { name: 'India', code: '+91' },
-      { name: 'United States', code: '+1' },
-      { name: 'United Kingdom', code: '+44' },
-      { name: 'Australia', code: '+61' },
-      // ... (full list)
+      { name: 'IN', code: '+91' },
+      { name: 'US', code: '+1' },
+      { name: 'UK', code: '+44' },
+      { name: 'AU', code: '+61' },
+      { name: 'AF', code: '+93' },
+      { name: 'AL', code: '+355' },
+      { name: 'DZ', code: '+213' },
+      { name: 'AR', code: '+54' },
+      { name: 'AM', code: '+374' },
+      { name: 'AT', code: '+43' },
+      { name: 'AZ', code: '+994' },
+      { name: 'BH', code: '+973' },
+      { name: 'BD', code: '+880' },
+      { name: 'BY', code: '+375' },
+      { name: 'BE', code: '+32' },
+      // Add more countries with abbreviations as needed
   ];
 
   if (isLoading) {
-    return <main className="min-h-screen flex items-center justify-center bg-[#28401c] text-[#dcc7b0]"><h1 className="text-4xl">Loading...</h1></main>;
+    return <main className="min-h-screen flex items-center justify-center bg-[#111111] text-[#F5EFEA]"><h1 className="text-4xl">Loading...</h1></main>;
   }
 
   if (!pageData) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#28401c] text-[#dcc7b0]">
+      <main className="min-h-screen flex items-center justify-center bg-[#111111] text-[#F5EFEA]">
         <h1 className="text-4xl">Could not load page content.</h1>
       </main>
     );
@@ -84,46 +96,46 @@ export default function ClassesPage() {
   const imageUrl = strapiUrl + image.url;
 
   return (
-    <main className="min-h-screen bg-[#28401c] text-[#dcc7b0]">
+    <main className="min-h-screen bg-[#111111] text-[#F5EFEA]">
       {/* Banner Image */}
-      <div className="relative w-full h-80">
+      <div className="relative w-full h-80 md:h-96">
         <Image src={imageUrl} alt={title || 'A dancer in motion'} fill sizes="100vw" style={{ objectFit: 'cover' }} priority />
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center">
           <h1 className="text-6xl font-serif font-bold text-center text-white">{title}</h1>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="max-w-4xl mx-auto p-8 md:p-16">
-        <div className="prose prose-invert lg:prose-xl max-w-none text-lg text-gray-300 mb-12">
+      <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="prose prose-invert lg:prose-xl max-w-none text-lg text-[#DADADA] mb-12">
           {description.map((block, index) => (
             <p key={index} className="mb-4">{block.children.map(child => child.text).join('')}</p>
           ))}
         </div>
         
         {/* Inquiry Form */}
-        <div className="bg-[#55682f] rounded-lg p-8">
-          <h2 className="text-3xl font-bold text-center text-[#acae2c] mb-6">Inquire About Classes</h2>
+        <div className="bg-[#1A1A1A] rounded-lg p-8 border border-[#2A2A2A]">
+          <h2 className="text-3xl font-bold text-center text-[#8A993F] mb-6">Inquire About Classes</h2>
           <form onSubmit={handleSubmit} className="space-y-6 max-w-xl mx-auto">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-              <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} className="w-full bg-[#686c24] text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]" />
+              <label htmlFor="name" className="block text-sm font-medium text-[#DADADA] mb-2">Full Name</label>
+              <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} className="w-full bg-[#111111] text-white p-3 rounded-lg border border-[#2A2A2A] focus:ring-2 focus:ring-[#8A993F]" />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-              <input type="email" name="email" id="email" required value={formData.email} onChange={handleChange} className="w-full bg-[#686c24] text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]" />
+              <label htmlFor="email" className="block text-sm font-medium text-[#DADADA] mb-2">Email Address</label>
+              <input type="email" name="email" id="email" required value={formData.email} onChange={handleChange} className="w-full bg-[#111111] text-white p-3 rounded-lg border border-[#2A2A2A] focus:ring-2 focus:ring-[#8A993F]" />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
-              <div className="flex">
+              <label htmlFor="phone" className="block text-sm font-medium text-[#DADADA] mb-2">Phone Number</label>
+              <div className="flex items-center">
                 <select 
                   name="countryCode" 
                   value={formData.countryCode} 
                   onChange={handleChange}
-                  className="bg-[#686c24] text-white p-3 rounded-l-lg border border-r-0 border-gray-600 focus:ring-2 focus:ring-[#acae2c] focus:outline-none"
+                  className="bg-[#111111] text-white p-3 rounded-l-lg border border-r-0 border-[#2A2A2A] focus:ring-2 focus:ring-[#8A993F] focus:outline-none flex-shrink-0"
                 >
                   {countryCodes.map(country => (
-                    <option key={country.code} value={country.code}>{country.name} ({country.code})</option>
+                    <option key={country.code} value={country.code}>{country.name} {country.code}</option>
                   ))}
                 </select>
                 <input 
@@ -133,21 +145,21 @@ export default function ClassesPage() {
                   required
                   value={formData.phone} 
                   onChange={handleChange} 
-                  className="w-full bg-[#686c24] text-white p-3 rounded-r-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]" 
+                  className="w-full bg-[#111111] text-white p-3 rounded-r-lg border border-[#2A2A2A] focus:ring-2 focus:ring-[#8A993F] flex-grow" 
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">Your Message or Question</label>
-              <textarea name="message" id="message" required rows="5" value={formData.message} onChange={handleChange} className="w-full bg-[#686c24] text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-[#acae2c]"></textarea>
+              <label htmlFor="message" className="block text-sm font-medium text-[#DADADA] mb-2">Your Message or Question</label>
+              <textarea name="message" id="message" required rows="5" value={formData.message} onChange={handleChange} className="w-full bg-[#111111] text-white p-3 rounded-lg border border-[#2A2A2A] focus:ring-2 focus:ring-[#8A993F]"></textarea>
             </div>
             <div>
-              <button type="submit" className="w-full bg-[#acae2c] text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#c98400] disabled:bg-gray-500" disabled={status === 'Sending...'}>
+              <button type="submit" className="w-full bg-[#8A993F] text-[#111111] font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#F5EFEA] disabled:bg-gray-500" disabled={status === 'Sending...'}>
                 {status === 'Sending...' ? 'Sending...' : 'Send Inquiry'}
               </button>
             </div>
             {status && status !== 'Sending...' && (
-              <p className="text-center text-[#acae2c]">{status}</p>
+              <p className="text-center text-[#8A993F]">{status}</p>
             )}
           </form>
         </div>
