@@ -36,8 +36,9 @@ function ProductionCard({ production }) {
   const truncatedOverview = truncateText(overviewText, 150);
 
   return (
-    <div className="bg-[#55682f] rounded-lg shadow-lg overflow-hidden flex flex-col">
-      <div className="relative w-full h-60">
+    <div className="bg-[#1A1A1A] rounded-lg shadow-lg overflow-hidden flex flex-col border border-transparent hover:border-[#8A993F] transition-all duration-300 hover:scale-[1.05]">
+      {/* --- UPDATE: Image container is now taller on medium screens and up --- */}
+      <div className="relative w-full h-60 md:h-72">
         <Image
           src={imageUrl}
           alt={title || 'Production Image'}
@@ -47,16 +48,16 @@ function ProductionCard({ production }) {
         />
       </div>
       <div className="p-6 flex flex-col flex-grow">
-        <h2 className="text-2xl font-serif font-bold mb-3 text-[#dcc7b0]">
+        <h2 className="text-2xl font-serif font-bold mb-3 text-white">
           {title}
         </h2>
-        <p className="text-gray-400 flex-grow mb-4">
+        <p className="text-[#DADADA] flex-grow mb-4">
           {truncatedOverview}
         </p>
         <div className="mt-auto">
           <Link 
             href={`/productions/${slug}`} 
-            className="inline-block text-[#acae2c] font-bold transition-colors duration-300 hover:text-[#c98400]"
+            className="inline-block text-[#8A993F] font-bold transition-colors duration-300 hover:text-[#F5EFEA]"
           >
             Learn More &rarr;
           </Link>
@@ -72,11 +73,12 @@ export default async function ProductionsPage() {
   const productions = await getProductions();
 
   return (
-    <main className="min-h-screen flex-col items-center p-8 md:p-24 bg-[#28401c] text-[#dcc7b0]">
+    // --- UPDATE: Added top padding to offset the fixed navbar ---
+    <main className="min-h-screen flex-col items-center px-8 pb-8 pt-28 md:px-24 md:pb-24 md:pt-44 bg-[#111111] text-[#F5EFEA]">
       <div className="w-full max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-serif font-bold">Our Work</h1>
-          <p className="text-lg text-gray-400 mt-4">A collection of our signature productions and artistic explorations.</p>
+          <h1 className="text-5xl font-serif font-bold text-white">Our Work</h1>
+          <p className="text-lg text-[#DADADA] mt-4">A collection of our signature productions and artistic explorations.</p>
         </div>
         
         {/* Productions Grid */}
@@ -84,7 +86,7 @@ export default async function ProductionsPage() {
           {productions.length > 0 ? (
             productions.map(production => <ProductionCard key={production.id} production={production} />)
           ) : (
-            <p className="text-gray-400 col-span-full text-center">No productions found.</p>
+            <p className="text-[#DADADA] col-span-full text-center">No productions found.</p>
           )}
         </div>
       </div>
