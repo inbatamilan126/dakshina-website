@@ -16,7 +16,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-[#0d0d0d] bg-opacity-95 backdrop-blur-md md:sticky top-0 z-50 text-[#dcc7b0]">
+    <nav className="absolute top-0 left-0 w-full bg-[rgba(13,13,13,0.3)]  top-0 z-50 text-[#dcc7b0]">
       <div className="max-w-full mx-auto px-4 sm:px-5 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
         <div className="flex items-center justify-between h-20 gap-4">
           {/* Logo / Company Name */}
