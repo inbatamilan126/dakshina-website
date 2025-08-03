@@ -1,12 +1,24 @@
 // File: frontend/src/components/layout/Navbar.js
 'use client'; // This is an interactive component
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+
+  // For increasing opacity while scrolling
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll',handleScroll);
+  }, []);
 
   const navLinks = [
     { href: '/productions', label: 'Our Work' },
@@ -16,7 +28,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-[rgba(13,13,13,0.3)]  top-0 z-50 text-[#dcc7b0]">
+    <nav className={`fixed top-0 left-0 w-full backdrop-blur-md z-50 text-[#dcc7b0] transition-colors duration-300 ${scrolled ? 'bg-[rgba(13,13,13,0.8)]' : 'bg-[rgba(13,13,13,0.5)]'}`}>
       <div className="max-w-full mx-auto px-4 sm:px-5 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
         <div className="flex items-center justify-between h-20 gap-4">
           {/* Logo / Company Name */}
