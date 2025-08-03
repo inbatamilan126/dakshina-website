@@ -131,7 +131,7 @@ export default async function Home() {
     <main className="flex min-h-screen flex-col items-center bg-[#111111] text-white">
 
       <Hero />
-      <h1 className="text-5xl font-serif font-bold mt-16 mb-12 text-[#F5EFEA]">Upcoming Schedule</h1>
+      <h1 className="text-5xl font-serif font-bold mt-12 md:mt-16 mb-12 text-center text-[#F5EFEA]">Upcoming Schedule</h1>
       
       <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-8">
         {Array.isArray(upcomingItems) && upcomingItems.length > 0 ? (

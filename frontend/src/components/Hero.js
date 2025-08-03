@@ -2,6 +2,7 @@
 'use client'
 import { motion, stagger, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import Link from 'next/link';
 
 // Custom Variants
 
@@ -9,18 +10,18 @@ const container = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.4,
+      staggerChildren: 0.3,
     },
   },
 };
 
 const fadeUp = {
-  hidden: {opacity: 0, y: 30},
+  hidden: {opacity: 0, y: 20},
   show: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 1.6,
+      duration: 1.2,
       ease: [0.25, 1, 0.3, 1],
     },
   },
@@ -44,7 +45,7 @@ export default function Hero() {
       >
         {/* Video Background */}
         <video
-          className="absolute top-0 left-0 w-full h-full object-cover z-20"
+          className="absolute top-0 left-0 w-full h-full object-cover z-0"
           src="/hero-video.mp4"
           autoPlay
           loop
@@ -53,7 +54,7 @@ export default function Hero() {
         />
   
         {/* Dark Overlay */}
-        <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 z-10" />
+        <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.6)] z-10" />
   
         {/* Text Content */}
         <div className="relative z-20 flex items-top md:items-center py-4 md:py-16 justify-center h-full px-6 text-center">
@@ -61,17 +62,23 @@ export default function Hero() {
             variants={container}
             initial="hidden"
             animate="show"
+            class="mt-16 md:mt-0"
             >
             <motion.h1
               variants={fadeUp}
-              className="text-4xl sm:text-5xl md:text-6xl font-serif text-white font-bold mb-4">
+              className="text-4xl sm:text-5xl md:text-6xl font-serif text-[#FFEFBD] font-bold mb-4">
               The Dakshina Dance Repertory
             </motion.h1>
             <motion.p
               variants={fadeUp}
-              className="text-lg sm:text-xl text-gray-200 max-w-2xl mx-auto">
+              className="text-lg sm:text-xl text-[#FFEFBD] max-w-2xl mx-auto">
               Exploring the boundaries of classical and contemporary Indian dance.
             </motion.p>
+            <motion.div variants={fadeUp} className="mt-8">
+              <Link href="/productions" className="inline-block px-8 py-4 bg-[#8A993F] text-[#111111] font-bold rounded-md text-lg hover:bg-[#F5EFEA] transition-colors duration-300">
+                Explore Our Work
+              </Link>
+            </motion.div>
             {/* Optional CTA */}
             {/* <div className="mt-6">
               <a href="/events" className="inline-block px-6 py-3 bg-[#8A993F] text-white rounded-full text-sm hover:bg-[#9baa53] transition">
