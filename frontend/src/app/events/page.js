@@ -57,7 +57,7 @@ function EventCard({ event }) {
   const imageUrl = strapiUrl + artisticWorkData.card_image.url;
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#55682f] rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
+    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-[#2A2A2A]">
       <div className="md:w-1/3 w-full h-64 md:h-auto relative">
         <Image
           src={imageUrl}
@@ -69,18 +69,18 @@ function EventCard({ event }) {
       </div>
       <div className="md:w-2/3 p-6 flex flex-col justify-between">
         <div>
-          <p className="text-sm text-[#acae2c] font-semibold tracking-wider uppercase">
+          <p className="text-sm text-[#8A993F] font-semibold tracking-wider uppercase">
             {formatDate(event.date)}
           </p>
-          <h2 className="text-3xl font-serif font-bold mt-2 mb-4 text-[#dcc7b0]">
+          <h2 className="text-3xl font-serif font-bold mt-2 mb-4 text-white">
             {title}
           </h2>
-          <p className="text-gray-400">{event.venue}</p>
+          <p className="text-[#DADADA]">{event.venue}</p>
         </div>
         <div className="mt-4">
           <Link 
             href={linkUrl} 
-            className="inline-block bg-[#acae2c] text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors duration-300 hover:bg-[#c98400]"
+            className="inline-block bg-[#8A993F] text-[#111111] font-semibold py-3 px-6 rounded-md transition-colors duration-300 hover:bg-[#F5EFEA]"
           >
             View Details
           </Link>
@@ -101,28 +101,28 @@ export default async function EventsPage() {
   const recentPastEvents = pastEvents.slice(0, 4);
 
   return (
-    <main className="min-h-screen flex-col items-center p-8 md:p-24 bg-[#28401c] text-[#dcc7b0]">
+    <main className="min-h-screen flex-col items-center px-8 pb-8 pt-28 md:px-24 md:pb-24 md:pt-44 bg-[#111111] text-[#F5EFEA]">
       <div className="w-full max-w-4xl mx-auto">
-        <h1 className="text-5xl font-serif font-bold mb-12 text-center">Events</h1>
+        <h1 className="text-5xl font-serif font-bold mb-16 text-center text-white">Events</h1>
         
         <section>
-          <h2 className="text-3xl font-semibold border-b-2 border-[#acae2c] pb-4 mb-8">Upcoming Performances</h2>
+          <h2 className="text-3xl font-semibold border-b-2 border-[#8A993F] pb-4 mb-8 text-white">Upcoming Performances</h2>
           <div className="space-y-8">
             {upcomingEvents.length > 0 ? (
               upcomingEvents.map(event => <EventCard key={event.id} event={event} />)
             ) : (
-              <p className="text-gray-400">There are no upcoming events scheduled at this time. Please check back soon!</p>
+              <p className="text-[#DADADA]">There are no upcoming events scheduled at this time. Please check back soon!</p>
             )}
           </div>
         </section>
 
         <section className="mt-20">
-          <h2 className="text-3xl font-semibold border-b-2 border-[#acae2c] pb-4 mb-8">Recently Concluded</h2>
+          <h2 className="text-3xl font-semibold border-b-2 border-[#8A993F] pb-4 mb-8 text-white">Recently Concluded</h2>
           <div className="space-y-8">
             {recentPastEvents.length > 0 ? (
               recentPastEvents.map(event => <EventCard key={event.id} event={event} />)
             ) : (
-              <p className="text-gray-400">No recent events to display.</p>
+              <p className="text-[#DADADA]">No recent events to display.</p>
             )}
           </div>
         </section>
@@ -130,7 +130,7 @@ export default async function EventsPage() {
         <div className="mt-20 text-center">
           <Link 
             href="/events/archive"
-            className="inline-block border border-[#acae2c] text-[#acae2c] font-bold py-3 px-8 rounded-lg transition-colors duration-300 hover:bg-[#acae2c] hover:text-gray-900"
+            className="inline-block border border-[#8A993F] text-[#8A993F] font-bold py-3 px-8 rounded-lg transition-colors duration-300 hover:bg-[#8A993F] hover:text-[#111111]"
           >
             View All Past Events
           </Link>
