@@ -133,7 +133,7 @@ export default async function Home() {
       <Hero />
       <h1 className="text-5xl font-serif font-bold mt-12 md:mt-16 mb-12 text-center text-[#F5EFEA]">Upcoming Schedule</h1>
       
-      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-8">
+      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-8 mb-8 md:mb-16">
         {Array.isArray(upcomingItems) && upcomingItems.length > 0 ? (
           upcomingItems.map((item) => {
             if (item.type === 'event') {
