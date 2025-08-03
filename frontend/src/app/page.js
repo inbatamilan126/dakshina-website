@@ -145,7 +145,7 @@ export default async function Home() {
             return null;
           })
         ) : (
-          <p className="text-[#DADADA] text-center text-lg">There are no upcoming events or workshops scheduled at this time. Please check back soon!</p>
+          <p className="col-span-1 md:col-span-2 text-[#DADADA] text-center text-lg">There are no upcoming events or workshops scheduled at this time. Please check back soon!</p>
         )}
       </div>
     </main>
