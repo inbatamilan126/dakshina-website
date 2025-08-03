@@ -39,11 +39,9 @@ export default function Navbar() {
                 alt="The Dakshina Dance Repertory Logo"
                 width={90} 
                 height={90}
-                className="h-24 w-auto"
+                className="h-20 w-auto"
               /> 
-              <span className="text-xl font-bold font-serif tracking-wide text-[#8A993F]">
-                The Dakshina Dance Repertory
-              </span>
+              
             </Link>
           </div>
 
