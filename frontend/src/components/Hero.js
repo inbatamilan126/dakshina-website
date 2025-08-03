@@ -57,12 +57,12 @@ export default function Hero() {
         <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.6)] z-10" />
   
         {/* Text Content */}
-        <div className="relative z-20 flex items-top md:items-center py-4 md:py-16 justify-center h-full px-6 text-center">
+        <div className="relative z-20 flex items-center md:items-center py-4 md:py-16 justify-center h-full px-6 text-center">
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            class="mt-16 md:mt-0"
+            class="mt-0 md:mt-0"
             >
             <motion.h1
               variants={fadeUp}
