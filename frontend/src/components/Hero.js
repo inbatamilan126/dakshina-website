@@ -62,7 +62,7 @@ export default function Hero() {
             variants={container}
             initial="hidden"
             animate="show"
-            class="mt-0 md:mt-0"
+            class="pb-16 md:pb-0"
             >
             <motion.h1
               variants={fadeUp}
