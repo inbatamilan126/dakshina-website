@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 // Helper function to format dates
 function formatDate(dateString) {
@@ -38,8 +39,7 @@ export default function SoloPage({ params }) {
       setIsLoading(true);
       try {
         // --- 1. Fetch the Solo Details ---
-        const soloRes = await fetch(`http://localhost:1337/api/solos?filters[slug][$eq]=${params.slug}&populate=*`);
-        if (!soloRes.ok) throw new Error('Failed to fetch solo performance');
+        const soloRes = await fetch(`${strapiUrl}/api/solos?filters[slug][$eq]=${params.slug}&populate=*`);
         const soloData = await soloRes.json();
         const currentSolo = soloData.data?.[0];
         setSolo(currentSolo);
@@ -47,17 +47,18 @@ export default function SoloPage({ params }) {
         if (currentSolo) {
           // --- 2. Fetch ALL Upcoming Events ---
           const now = new Date().toISOString();
-          // --- CRUCIAL FIX: Use the deep populate query to get all nested data ---
-          const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*&populate=ticket_tiers`);
-          if (!eventsRes.ok) throw new Error('Failed to fetch events');
+          const eventsRes = await fetch(`${strapiUrl}/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*&populate=ticket_tiers`);
           const eventsData = await eventsRes.json();
           const allUpcomingEvents = eventsData.data || [];
 
-          // --- 3. Filter events on the client-side (This is the robust fix) ---
-          const relevantEvents = allUpcomingEvents.filter(event => 
-            event.artistic_work?.[0]?.__component === 'links.solo-link' &&
-            event.artistic_work?.[0]?.solo?.id === currentSolo.id
-          );
+          // --- 3. Filter events on the client-side for this specific solo ---
+          const relevantEvents = allUpcomingEvents.filter(event => {
+            const component = event.artistic_work?.[0];
+            return (
+              component?.__component === 'links.solo-link' &&
+              component.solo?.id === currentSolo.id
+            );
+          });
           
           const sortedEvents = relevantEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
           setUpcomingEvents(sortedEvents);
@@ -84,7 +85,7 @@ export default function SoloPage({ params }) {
   
   const validateEmailFormat = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).toLowerCase());
 
-  const handleBookClick = (event) => {
+  const handleBookClick = () => {
     if (!selectedTier) {
       alert("Please select a ticket tier.");
       return;
@@ -94,7 +95,6 @@ export default function SoloPage({ params }) {
       return;
     }
     setEmailError('');
-    setSelectedEvent(event);
     setShowConfirmModal(true);
   };
   
@@ -104,7 +104,7 @@ export default function SoloPage({ params }) {
 
     try {
       const purchaseQuantity = selectedTier.is_online_access ? 1 : quantity;
-      const orderRes = await fetch('http://localhost:1337/api/orders/create', {
+      const orderRes = await fetch(`${strapiUrl}/api/orders/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,7 +134,7 @@ export default function SoloPage({ params }) {
         order_id: orderDetails.id,
         
         handler: async (response) => {
-          const verifyRes = await fetch('http://localhost:1337/api/orders/verify', {
+          const verifyRes = await fetch(`${strapiUrl}/api/orders/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(response),
@@ -179,8 +179,9 @@ export default function SoloPage({ params }) {
     return <main className="flex min-h-screen items-center justify-center bg-[#111111] text-[#F5EFEA]"><h1 className="text-4xl">Solo Performance Not Found</h1></main>;
   }
 
-  const { title, short_overview, banner_desktop } = solo;
-  const bannerUrl = strapiUrl + banner_desktop.url;
+  const { title, short_overview, banner_desktop, banner_mobile } = solo;
+  const desktopBannerUrl = strapiUrl + banner_desktop.url;
+  const mobileBannerUrl = strapiUrl + banner_mobile.url;
 
   return (
     <>
@@ -191,73 +192,94 @@ export default function SoloPage({ params }) {
           onCancel={() => setShowConfirmModal(false)}
         />
       )}
-      <main className="min-h-screen bg-[#111111] text-[#F5EFEA] pt-20">
-        <div className="relative w-full h-96">
-          <Image src={bannerUrl} alt={title} fill sizes="100vw" style={{objectFit: 'cover'}} priority />
-          <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)] flex items-center justify-center">
-            <h1 className="text-6xl font-serif font-bold text-center text-white">{title}</h1>
+      <main className="min-h-screen bg-[#111111] text-[#F5EFEA]">
+        
+        <section className="relative w-full h-[60vh] md:h-[80vh]">
+          <div className="hidden md:block w-full h-full">
+            <Image src={desktopBannerUrl} alt={title} fill style={{objectFit: 'cover'}} priority />
           </div>
-        </div>
+          <div className="md:hidden w-full h-full">
+            <Image src={mobileBannerUrl} alt={title} fill style={{objectFit: 'cover'}} priority />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-black/30"></div>
+          <div className="absolute inset-0 flex items-end justify-center p-8">
+            <h1 className="text-5xl md:text-7xl font-serif font-bold text-center text-white mb-8">{title}</h1>
+          </div>
+        </section>
 
-        <div className="max-w-4xl mx-auto p-8">
-          {upcomingEvents.length > 0 && (
-            <div className="bg-[#1A1A1A] rounded-lg p-8 mb-12 border border-[#2A2A2A]">
-              <h2 className="text-3xl font-bold text-[#8A993F] mb-6 text-center">Book Your Tickets</h2>
-              {upcomingEvents.map(event => (
-                <div key={event.id} className="mb-8">
-                  <div className="bg-[#111111] p-4 rounded-t-lg">
-                    <p className="text-xl font-bold text-[#F5EFEA]">{formatDate(event.date)}</p>
-                    <p className="text-[#DADADA]">{event.venue}</p>
-                  </div>
-                  <div className="bg-[#111111] p-4 rounded-b-lg border-t border-[#2A2A2A]">
-                    <h3 className="text-lg font-semibold mb-3 text-[#F5EFEA]">Select Ticket Tier:</h3>
-                    <div className="space-y-3">
-                      {[...event.ticket_tiers].sort((a, b) => a.price - b.price).map(tier => {
-                        const remainingTickets = tier.capacity - tier.tickets_sold;
-                        const isSoldOut = remainingTickets <= 0;
-                        const isSelected = selectedTier?.id === tier.id && selectedEvent?.id === event.id;
-                        return (
-                          <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-[#8A993F] text-black' : 'bg-[#2A2A2A] hover:bg-opacity-70'}`}>
-                            <div className="flex items-center">
-                              <input type="radio" id={`tier_${tier.id}`} name={`event_${event.id}_tier`} disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setSelectedEvent(event); setQuantity(1); }} className="h-5 w-5 text-[#8A993F] bg-gray-700 border-gray-500"/>
-                              <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer">
-                                <span className="font-bold text-white">{tier.name}</span>
-                                <span className="ml-2 text-gray-400">(₹{tier.price})</span>
-                              </label>
-                              {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
-                            </div>
-                            {isSelected && !isSoldOut && !tier.is_online_access && (
-                              <div className="mt-4 flex items-center justify-center">
-                                <label className="mr-4">Quantity:</label>
-                                <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button>
-                                <input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/>
-                                <button onClick={() => setQuantity(q => Math.min(remainingTickets, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button>
+        <div className="max-w-7xl mx-auto p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-12">
+            
+            <div className="lg:col-span-1 lg:order-last">
+              {upcomingEvents.length > 0 && (
+                <section id="booking" className="bg-[#1A1A1A] rounded-lg p-6 sticky top-24 shadow-lg border border-[#2A2A2A] mb-12 lg:mb-0">
+                  <h2 className="text-3xl font-bold text-[#8A993F] mb-6 text-center">Book Your Tickets</h2>
+                  {upcomingEvents.map(event => (
+                    <div key={event.id} className="mb-8">
+                      <div className="bg-[#111111] p-4 rounded-t-lg">
+                        <p className="text-xl font-bold text-[#F5EFEA]">{formatDate(event.date)}</p>
+                        <p className="text-[#DADADA]">{event.venue}</p>
+                      </div>
+                      <div className="bg-[#111111] p-4 rounded-b-lg border-t border-[#2A2A2A]">
+                        <h3 className="text-lg font-semibold mb-3 text-[#F5EFEA]">Select Ticket Tier:</h3>
+                        <div className="space-y-3">
+                          {[...event.ticket_tiers].sort((a, b) => a.price - b.price).map(tier => {
+                            const remainingTickets = tier.capacity - tier.tickets_sold;
+                            const isSoldOut = remainingTickets <= 0;
+                            const isSelected = selectedTier?.id === tier.id && selectedEvent?.id === event.id;
+
+                            return (
+                              <div key={tier.id} className={`p-3 rounded-md transition-all ${isSoldOut ? 'opacity-50' : ''} ${isSelected ? 'bg-[#8A993F] text-black' : 'bg-[#2A2A2A] hover:bg-opacity-70'}`}>
+                                <div className="flex items-center">
+                                  <input type="radio" id={`tier_${tier.id}`} name={`event_${event.id}_tier`} disabled={isSoldOut} checked={isSelected} onChange={() => { setSelectedTier(tier); setSelectedEvent(event); setQuantity(1); }} className="h-5 w-5 text-[#8A993F] bg-gray-700 border-gray-500 focus:ring-[#8A993F]"/>
+                                  <label htmlFor={`tier_${tier.id}`} className="ml-4 flex-grow cursor-pointer"><span className="font-bold">{tier.name}</span><span className="ml-2 text-gray-400">(₹{tier.price})</span></label>
+                                  {isSoldOut && <span className="text-red-500 font-bold">Sold Out</span>}
+                                </div>
+                                {isSelected && !isSoldOut && !tier.is_online_access && (
+                                  <div className="mt-4 flex items-center justify-center"><label className="mr-4">Quantity:</label><button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="bg-gray-600 px-3 py-1 rounded-l-md">-</button><input type="text" readOnly value={quantity} className="w-12 text-center bg-gray-700"/><button onClick={() => setQuantity(q => Math.min(remainingTickets, q + 1))} className="bg-gray-600 px-3 py-1 rounded-r-md">+</button></div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
+                  ))}
+                  <div className="mt-8">
+                    <label htmlFor="email" className="block text-lg font-medium text-gray-300 mb-2 text-center">Enter your email to book:</label>
+                    <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="w-full max-w-md mx-auto bg-[#111111] text-white text-lg p-3 rounded-lg border border-[#2A2A2A] block"/>
+                    {emailError && <p className="text-red-500 mt-2 text-center">{emailError}</p>}
                   </div>
-                </div>
-              ))}
-              <div className="mt-8">
-                <label htmlFor="email" className="block text-lg font-medium text-gray-300 mb-2 text-center">Enter your email to book:</label>
-                <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your.email@example.com" className="w-full max-w-md mx-auto bg-[#111111] text-white text-lg p-3 rounded-lg border border-[#2A2A2A] block"/>
-                {emailError && <p className="text-red-500 mt-2 text-center">{emailError}</p>}
-              </div>
-              <div className="mt-6 text-center">
-                <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="inline-block bg-[#8A993F] text-[#111111] font-bold py-4 px-12 text-xl rounded-lg transition-colors duration-300 hover:bg-[#F5EFEA] disabled:bg-gray-500 disabled:cursor-not-allowed">
-                  {isRzpReady ? (selectedTier ? `Book ${selectedTier.is_online_access ? 1 : quantity} Ticket(s) (₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading Payment...'}
-                </button>
-              </div>
+                  <div className="mt-6 text-center">
+                    <button onClick={handleBookClick} disabled={!isRzpReady || !selectedTier} className="w-full bg-[#8A993F] text-[#111111] font-bold py-4 px-8 text-lg rounded-lg transition-colors duration-300 hover:bg-[#F5EFEA] disabled:bg-gray-500 disabled:cursor-not-allowed">
+                      {isRzpReady ? (selectedTier ? `Book ${selectedTier.is_online_access ? 1 : quantity} Ticket(s) (₹${selectedTier.price * (selectedTier.is_online_access ? 1 : quantity)})` : 'Select a Tier') : 'Loading Payment...'}
+                    </button>
+                  </div>
+                </section>
+              )}
             </div>
-          )}
+            
+            <div className={upcomingEvents.length > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              <section className="prose prose-invert max-w-none text-lg text-[#DADADA] lg:prose-xl">
+                 {short_overview.map((block, index) => (
+                  <p key={index} className="mb-4">{block.children.map(child => child.text).join('')}</p>
+                ))}
+              </section>
+            </div>
 
-          <div className="prose prose-invert max-w-none text-lg text-[#DADADA]">
-             {short_overview.map((block, index) => (
-              <p key={index} className="mb-4">{block.children.map(child => child.text).join('')}</p>
-            ))}
+          </div>
+
+          <div className="lg:col-span-3">
+            {/* Gallery and Video Excerpts can be added here for solos if needed */}
+            {/* <section className="mt-20 text-center bg-[#1A1A1A] p-12 rounded-lg border border-[#2A2A2A]">
+              <h2 className="text-3xl font-bold text-white">Bring this Performance to Your Stage</h2>
+              <p className="text-lg text-[#DADADA] mt-4 max-w-2xl mx-auto">Interested in hosting a performance of "{title}"? We would love to hear from you.</p>
+              <div className="mt-8">
+                <Link href="/classes" className="inline-block bg-[#8A993F] text-[#111111] font-bold py-3 px-8 rounded-lg text-lg hover:bg-[#F5EFEA] transition-colors duration-300">
+                  Inquire Now
+                </Link>
+              </div>
+            </section> */}
           </div>
         </div>
       </main>
