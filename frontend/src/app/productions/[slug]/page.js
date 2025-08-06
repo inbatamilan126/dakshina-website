@@ -433,7 +433,7 @@ export default function ProductionPage({ params }) {
             <AnimatedSection>
               <section className="mt-20 text-center bg-[#1A1A1A] p-12 rounded-lg border border-[#2A2A2A]">
                 <h2 className="text-3xl font-bold text-white">Bring this Production to Your Stage</h2>
-                <p className="text-lg text-[#DADADA] mt-4 max-w-2xl mx-auto">Interested in hosting a performance of "{title}"? We would love to hear from you.</p>
+                <p className="text-lg text-[#DADADA] mt-4 max-w-2xl mx-auto">Interested in hosting a performance of &ldquo;{title}&rdquo;"? We would love to hear from you.</p>
                 <div className="mt-8">
                   <Link href="/classes" className="inline-block bg-[#8A993F] text-[#111111] font-bold py-3 px-8 rounded-lg text-lg hover:bg-[#F5EFEA] transition-colors duration-300">
                     Inquire Now
