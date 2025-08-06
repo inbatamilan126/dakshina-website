@@ -73,6 +73,9 @@
     "slug": {
       "type": "uid",
       "targetField": "title"
+    },
+    "subtitle": {
+      "type": "string"
     }
   }
 }

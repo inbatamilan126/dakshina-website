@@ -569,6 +569,7 @@ export interface ApiProductionProduction extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     short_overview: Schema.Attribute.Blocks;
     slug: Schema.Attribute.UID<'title'>;
+    subtitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -649,6 +650,7 @@ export interface ApiSoloSolo extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     short_overview: Schema.Attribute.Blocks;
     slug: Schema.Attribute.UID<'title'>;
+    subtitle: Schema.Attribute.String;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
