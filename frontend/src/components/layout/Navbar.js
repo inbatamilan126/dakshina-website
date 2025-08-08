@@ -35,9 +35,9 @@ export default function Navbar() {
               <Image 
                 src="/logo.png"
                 alt="The Dakshina Dance Repertory Logo"
-                width={80} 
-                height={80}
-                className="h-20 w-auto"
+                width={64} 
+                height={64}
+                className="h-16 w-auto"
               /> 
             </Link>
           </div>
