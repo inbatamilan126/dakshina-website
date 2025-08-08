@@ -25,7 +25,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full backdrop-blur-md z-50 text-[#dcc7b0] transition-colors duration-300 ${scrolled ? 'bg-[rgba(13,13,13,0.85)]' : 'bg-[rgba(13,13,13,0.5)]'}`}>
+    <nav className={`fixed top-0 left-0 w-full backdrop-blur-md z-50 text-[#dcc7b0] transition-colors duration-300 ${scrolled ? 'bg-[rgba(13,13,13,0.85)]' : 'bg-[rgba(13,13,13,0.4)]'}`}>
       <div className="max-w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
         <div className="flex items-center justify-between h-20">
           
