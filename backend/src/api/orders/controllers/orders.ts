@@ -6,7 +6,6 @@ import * as crypto from 'crypto';
 const Razorpay = require('razorpay');
 const Brevo = require('@getbrevo/brevo');
 import Mux from '@mux/mux-node';
-// We no longer need fs or path
 
 // Initialize clients
 const razorpay = new Razorpay({
@@ -26,10 +25,9 @@ const generateSecureMuxUrl = async (assetId: string, expirationDuration: string)
   try {
     const playbackId = await mux.video.assets.createPlaybackId(assetId, { policy: 'signed' });
     
-    // --- CORRECTED: Use the Base64 encoded key directly from the .env file ---
     const token = await mux.jwt.signPlaybackId(playbackId.id, {
       keyId: process.env.MUX_SIGNING_KEY_ID,
-      keySecret: process.env.MUX_BASE64_PRIVATE_KEY, // Use the correct environment variable
+      keySecret: process.env.MUX_BASE64_PRIVATE_KEY,
       expiration: expirationDuration,
       type: 'video'
     });
@@ -100,12 +98,30 @@ module.exports = {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
       if (type === 'event') {
-        const events = await strapi.entityService.findMany('api::event.event', { filters: { uid: eventCode } as any, populate: '*' });
+        // --- FINAL FIX: Explicitly populate both artistic_work and ticket_tiers ---
+        const events = await strapi.entityService.findMany('api::event.event', { 
+          filters: { uid: eventCode }, 
+          populate: {
+            artistic_work: {
+              populate: '*',
+            },
+            ticket_tiers: true, // Explicitly ask for the ticket tiers
+          } 
+        } as any);
         itemToUpdate = events?.[0];
+        
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          const artisticWork = (itemToUpdate as any).artistic_work?.[0];
-          emailParams = { eventName: artisticWork?.production?.title || artisticWork?.solo?.title, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
+          
+          const artisticWorkComponent = (itemToUpdate as any).artistic_work?.[0];
+          let eventName = 'Upcoming Performance';
+          if (artisticWorkComponent?.production?.title) {
+              eventName = artisticWorkComponent.production.title;
+          } else if (artisticWorkComponent?.solo?.title) {
+              eventName = artisticWorkComponent.solo.title;
+          }
+
+          emailParams = { eventName: eventName, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
         }
       } else if (type === 'workshop') {
         const workshops = await strapi.entityService.findMany('api::workshop.workshop', { filters: { slug: eventCode } as any, populate: '*' });
@@ -121,16 +137,10 @@ module.exports = {
         if (tierIndex > -1) {
           const purchasedTier = (itemToUpdate as any).ticket_tiers[tierIndex];
 
-          if (purchasedTier.is_zoom_access) {
-            console.log("Interactive Zoom ticket detected. Collecting Zoom links...");
-            brevoTemplateId = 6; // Use your new Zoom Workshop Template ID
-            for (const session of (itemToUpdate as any).schedule) {
-              if (session.zoom_link) {
-                secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: session.zoom_link });
-              }
-            }
+          if (purchasedTier.is_zoom_access){
+            brevoTemplateId = 6;
+            secureWatchLinks = (itemToUpdate as any).schedule.filter(s => s.zoom_link).map(s => ({ name: s.topic || `Session on ${new Date(s.date).toLocaleDateString()}`, url: s.zoom_link }));
           } else if (purchasedTier.is_online_access) {
-            console.log("Online watch-only ticket detected. Generating Mux links...");
             brevoTemplateId = (type === 'event') ? 4 : 5;
             if (type === 'event') {
               const eventEndTime = new Date(itemToUpdate.date).getTime();
@@ -148,7 +158,6 @@ module.exports = {
               }
             }
           } else {
-            console.log("In-person ticket detected.");
             brevoTemplateId = (type === 'event') ? 1 : 3;
           }
 

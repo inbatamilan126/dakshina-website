@@ -257,7 +257,7 @@ export default function ProductionPage({ params }) {
       }
       const orderDetails = await orderRes.json();
       
-      const razorpayKeyId = 'rzp_test_zL8bY0q0h5k8QJ'; // Replace with your key
+      const razorpayKeyId = 'rzp_test_tn3D5B6Bh0HPcH'; // Replace with your key
 
       const options = {
         key: razorpayKeyId,
