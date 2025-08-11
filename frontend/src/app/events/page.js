@@ -102,7 +102,7 @@ export default async function EventsPage() {
 
   return (
     <main className="min-h-screen flex-col items-center px-8 pb-8 pt-28 md:px-24 md:pb-24 md:pt-44 bg-[#111111] text-[#F5EFEA]">
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
         <h1 className="text-5xl font-serif font-bold mb-16 text-center text-white">Events</h1>
         
         <section>
