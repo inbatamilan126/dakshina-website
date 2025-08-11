@@ -2,10 +2,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+// --- UPDATE: Define the Strapi URL in one central place ---
+const strapiUrl = 'http://localhost:1337';
+
 // This function fetches all workshops data.
 async function getWorkshops() {
   try {
-    const res = await fetch('http://localhost:1337/api/workshops?sort=start_date:desc&populate=*', { cache: 'no-store' });
+    // Now uses the strapiUrl variable
+    const res = await fetch(`${strapiUrl}/api/workshops?sort=start_date:desc&populate=*`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch data from API');
     const responseData = await res.json();
     return responseData.data;
@@ -35,14 +39,14 @@ function formatDateRange(startDateString, endDateString) {
 
 // Reusable Workshop Card Component
 function WorkshopCard({ workshop }) {
-  const strapiUrl = 'http://localhost:1337';
+  // No longer needs its own strapiUrl definition
 
-  if (!workshop || !workshop.banner_image?.url) {
+  if (!workshop || !workshop.card_image?.url) {
     return null;
   }
 
-  const { title, slug, start_date, end_date, instructor, banner_image, venue } = workshop;
-  const imageUrl = strapiUrl + workshop.banner_image.url;
+  const { title, slug, start_date, end_date, instructor, card_image, venue } = workshop;
+  const imageUrl = strapiUrl + card_image.url;
   const instructorName = instructor?.name || 'TBA';
 
   return (
