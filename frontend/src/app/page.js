@@ -3,18 +3,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Hero from '../components/Hero';
 
+// --- UPDATE: Define the Strapi URL in one central place ---
+const strapiUrl = 'http://localhost:1337';
+
 // This function now fetches BOTH upcoming events and workshops
 async function getUpcomingItems() {
   try {
     const now = new Date().toISOString();
     
     // Fetch upcoming events (productions/solos)
-    const eventsRes = await fetch(`http://localhost:1337/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*`, { cache: 'no-store' });
+    const eventsRes = await fetch(`${strapiUrl}/api/events?filters[date][$gt]=${now}&populate[artistic_work][on][links.production-link][populate][production][populate]=*&populate[artistic_work][on][links.solo-link][populate][solo][populate]=*`, { cache: 'no-store' });
     if (!eventsRes.ok) throw new Error('Failed to fetch events');
     const eventsData = await eventsRes.json();
     
     // Fetch upcoming workshops
-    const workshopsRes = await fetch(`http://localhost:1337/api/workshops?filters[start_date][$gt]=${now}&populate=*`, { cache: 'no-store' });
+    const workshopsRes = await fetch(`${strapiUrl}/api/workshops?filters[start_date][$gt]=${now}&populate=*`, { cache: 'no-store' });
     if (!workshopsRes.ok) throw new Error('Failed to fetch workshops');
     const workshopsData = await workshopsRes.json();
 
@@ -55,7 +58,6 @@ function formatDate(dateString) {
 
 // --- Reusable Event Card Component (for Productions/Solos) ---
 function EventCard({ event }) {
-  const strapiUrl = 'http://localhost:1337';
   if (!event.artistic_work || event.artistic_work.length === 0) return null;
 
   const component = event.artistic_work[0];
@@ -75,7 +77,7 @@ function EventCard({ event }) {
   const imageUrl = strapiUrl + artisticWorkData.card_image.url;
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] hover:border-[#8A993F] transition-transform duration-300">
+    <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] hover:border-[#8A993F] transition-all duration-300">
       <div className="md:w-1/3 w-full h-72 md:min-h-[300px] relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
         <Image src={imageUrl} alt={title || 'Event Image'} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }}/>
       </div>
@@ -96,14 +98,14 @@ function EventCard({ event }) {
 
 // --- Reusable Workshop Card Component ---
 function WorkshopCard({ workshop }) {
-    const strapiUrl = 'http://localhost:1337';
-    if (!workshop || !workshop.banner_image?.url) return null;
+    // --- UPDATE: Now uses 'card_image' for consistency ---
+    if (!workshop || !workshop.card_image?.url) return null;
 
     const { title, slug, start_date } = workshop;
-    const imageUrl = strapiUrl + workshop.banner_image.url;
+    const imageUrl = strapiUrl + workshop.card_image.url;
 
     return (
-        <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] hover:border-[#8A993F] transition-transform duration-300">
+        <div className="flex flex-col md:flex-row bg-[#1A1A1A] rounded-2xl shadow-md overflow-hidden border border-[#2A2A2A] hover:shadow-lg hover:scale-[1.02] hover:border-[#8A993F] transition-all duration-300">
             <div className="md:w-1/3 w-full h-72 md:min-h-[300px] relative rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
                 <Image src={imageUrl} alt={title || 'Workshop Image'} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: 'cover' }}/>
             </div>
