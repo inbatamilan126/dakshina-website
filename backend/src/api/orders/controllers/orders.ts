@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 const Razorpay = require('razorpay');
 const Brevo = require('@getbrevo/brevo');
 import Mux from '@mux/mux-node';
-// We no longer need the fs or path modules
+// We no longer need fs or path
 
 // Initialize clients
 const razorpay = new Razorpay({
@@ -21,15 +21,16 @@ const mux = new Mux({
 });
 
 // Helper function to generate a JWT-signed URL
-const generateSecureMuxUrl = async (livestreamId: string, expirationDuration: string) => {
-  if (!livestreamId) return null;
+const generateSecureMuxUrl = async (assetId: string, expirationDuration: string) => {
+  if (!assetId) return null;
   try {
-    const playbackId = await mux.video.liveStreams.createPlaybackId(livestreamId, { policy: 'signed' });
+    const playbackId = await mux.video.assets.createPlaybackId(assetId, { policy: 'signed' });
     
+    // --- CORRECTED: Use the Base64 encoded key directly from the .env file ---
     const token = await mux.jwt.signPlaybackId(playbackId.id, {
       keyId: process.env.MUX_SIGNING_KEY_ID,
-      keySecret: process.env.MUX_BASE64_PRIVATE_KEY,
-      expiration: expirationDuration, // Use the calculated duration string (e.g., "3600s")
+      keySecret: process.env.MUX_BASE64_PRIVATE_KEY, // Use the correct environment variable
+      expiration: expirationDuration,
       type: 'video'
     });
     
@@ -37,11 +38,10 @@ const generateSecureMuxUrl = async (livestreamId: string, expirationDuration: st
     return { playbackId: playbackId.id, token: token };
 
   } catch (error) {
-    console.error(`Error generating Mux URL for asset ${livestreamId}:`, error);
+    console.error(`Error generating Mux URL for asset ${assetId}:`, error);
     return null;
   }
 };
-
 
 module.exports = {
   async create(ctx) {
@@ -104,17 +104,6 @@ module.exports = {
         itemToUpdate = events?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          // --- FINAL FIX: Calculate duration in seconds from now ---
-          const eventEndTime = new Date(itemToUpdate.date).getTime();
-          const expirationTime = eventEndTime + (6 * 60 * 60 * 1000); // 6 hours after event in ms
-          const now = Date.now();
-          const durationInSeconds = Math.floor((expirationTime - now) / 1000);
-
-          const muxData = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id, `${durationInSeconds}s`);
-          if (muxData) {
-            const watchUrl = `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}`;
-            secureWatchLinks.push({ name: 'Watch Live', url: watchUrl });
-          }
           const artisticWork = (itemToUpdate as any).artistic_work?.[0];
           emailParams = { eventName: artisticWork?.production?.title || artisticWork?.solo?.title, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
         }
@@ -123,19 +112,7 @@ module.exports = {
         itemToUpdate = workshops?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          for (const session of (itemToUpdate as any).schedule) {
-            const sessionEndTime = new Date(`${session.date}T${session.end_time}`).getTime();
-            const expirationTime = sessionEndTime + (6 * 60 * 60 * 1000);
-            const now = Date.now();
-            const durationInSeconds = Math.floor((expirationTime - now) / 1000);
-
-            const muxData = await generateSecureMuxUrl(session.mux_livestream_id, `${durationInSeconds}s`);
-            if (muxData) {
-              const watchUrl = `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}`;
-              secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: watchUrl });
-            }
-          }
-          emailParams = { eventName: itemToUpdate.title, eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, eventVenue: itemToUpdate.venue };
+          emailParams = { eventName: itemToUpdate.title, eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, eventVenue: itemToUpdate.venue, schedule: (itemToUpdate as any).schedule };
         }
       }
 
@@ -143,10 +120,36 @@ module.exports = {
         const tierIndex = (itemToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
         if (tierIndex > -1) {
           const purchasedTier = (itemToUpdate as any).ticket_tiers[tierIndex];
-          if (purchasedTier.is_online_access) {
-             brevoTemplateId = (type === 'event') ? 4 : 5;
+
+          if (purchasedTier.is_zoom_access) {
+            console.log("Interactive Zoom ticket detected. Collecting Zoom links...");
+            brevoTemplateId = 6; // Use your new Zoom Workshop Template ID
+            for (const session of (itemToUpdate as any).schedule) {
+              if (session.zoom_link) {
+                secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: session.zoom_link });
+              }
+            }
+          } else if (purchasedTier.is_online_access) {
+            console.log("Online watch-only ticket detected. Generating Mux links...");
+            brevoTemplateId = (type === 'event') ? 4 : 5;
+            if (type === 'event') {
+              const eventEndTime = new Date(itemToUpdate.date).getTime();
+              const expirationTime = eventEndTime + (6 * 60 * 60 * 1000);
+              const durationInSeconds = Math.floor((expirationTime - Date.now()) / 1000);
+              const muxData = await generateSecureMuxUrl((itemToUpdate as any).mux_livestream_id, `${durationInSeconds}s`);
+              if (muxData) secureWatchLinks.push({ name: 'Watch Live', url: `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}` });
+            } else if (type === 'workshop') {
+              for (const session of (itemToUpdate as any).schedule) {
+                const sessionEndTime = new Date(`${session.date}T${session.end_time}`).getTime();
+                const expirationTime = sessionEndTime + (6 * 60 * 60 * 1000);
+                const durationInSeconds = Math.floor((expirationTime - Date.now()) / 1000);
+                const muxData = await generateSecureMuxUrl(session.mux_livestream_id, `${durationInSeconds}s`);
+                if (muxData) secureWatchLinks.push({ name: session.topic || `Session on ${new Date(session.date).toLocaleDateString()}`, url: `${frontendUrl}/watch/${muxData.playbackId}?token=${muxData.token}` });
+              }
+            }
           } else {
-             brevoTemplateId = (type === 'event') ? 1 : 3;
+            console.log("In-person ticket detected.");
+            brevoTemplateId = (type === 'event') ? 1 : 3;
           }
 
           const updatedTiers = JSON.parse(JSON.stringify((itemToUpdate as any).ticket_tiers));
@@ -183,7 +186,7 @@ module.exports = {
         sendSmtpEmail.templateId = brevoTemplateId;
         sendSmtpEmail.params = emailParams;
         await brevoApi.sendTransacEmail(sendSmtpEmail);
-        console.log("Ticket email with secure links sent successfully.");
+        console.log(`Ticket email sent successfully using template ID: ${brevoTemplateId}.`);
 
       } else {
         console.error(`CRITICAL: Could not find ${type} with code ${eventCode} after payment.`);
