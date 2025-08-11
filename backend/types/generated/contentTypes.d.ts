@@ -704,7 +704,13 @@ export interface ApiWorkshopWorkshop extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    banner_image: Schema.Attribute.Media<
+    banner_desktop: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    banner_mobile: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    card_image: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios'
     >;
     createdAt: Schema.Attribute.DateTime;

@@ -34,6 +34,7 @@ export interface SessionsSessionDetail extends Struct.ComponentSchema {
     mux_livestream_id: Schema.Attribute.String;
     start_time: Schema.Attribute.Time;
     topic: Schema.Attribute.String;
+    zoom_link: Schema.Attribute.String;
   };
 }
 
@@ -45,6 +46,9 @@ export interface TicketTiersTicketTier extends Struct.ComponentSchema {
   attributes: {
     capacity: Schema.Attribute.Integer;
     is_online_access: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
+    is_zoom_access: Schema.Attribute.Boolean &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<false>;
     name: Schema.Attribute.String & Schema.Attribute.Required;

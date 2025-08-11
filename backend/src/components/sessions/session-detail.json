@@ -19,6 +19,9 @@
     },
     "mux_livestream_id": {
       "type": "string"
+    },
+    "zoom_link": {
+      "type": "string"
     }
   },
   "config": {}

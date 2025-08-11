@@ -28,7 +28,7 @@
     "end_date": {
       "type": "datetime"
     },
-    "banner_image": {
+    "banner_desktop": {
       "type": "media",
       "multiple": false,
       "allowedTypes": [
@@ -54,6 +54,26 @@
     },
     "venue": {
       "type": "string"
+    },
+    "banner_mobile": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "card_image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

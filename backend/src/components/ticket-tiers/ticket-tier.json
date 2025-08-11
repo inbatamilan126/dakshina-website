@@ -26,6 +26,11 @@
       "type": "boolean",
       "required": true,
       "default": false
+    },
+    "is_zoom_access": {
+      "type": "boolean",
+      "required": true,
+      "default": false
     }
   },
   "config": {}
