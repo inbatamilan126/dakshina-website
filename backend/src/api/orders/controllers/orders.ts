@@ -43,19 +43,45 @@ const generateSecureMuxUrl = async (assetId: string, expirationDuration: string)
 
 module.exports = {
   async create(ctx) {
-    // This function remains the same
+    console.log("--- Universal create order endpoint reached ---");
     try {
-      const { amount, eventId, eventUid, workshopId, workshopSlug, tierName, quantity } = ctx.request.body;
+      const { amount, tierName, quantity, eventId, eventUid, workshopId, workshopSlug, userName, userQuestion } = ctx.request.body;
+      
       let options;
+
       if (eventId && eventUid) {
-        options = { amount, currency: "INR", receipt: `receipt_evt_${eventId}_${Date.now()}`, notes: { type: 'event', eventCode: eventUid, tierName, quantity: String(quantity) } };
+        options = { 
+            amount, 
+            currency: "INR", 
+            receipt: `receipt_evt_${eventId}_${Date.now()}`, 
+            notes: { 
+                type: 'event', 
+                eventCode: eventUid, 
+                tierName, 
+                quantity: String(quantity) 
+            } 
+        };
       } else if (workshopId && workshopSlug) {
-        options = { amount, currency: "INR", receipt: `receipt_ws_${workshopId}_${Date.now()}`, notes: { type: 'workshop', eventCode: workshopSlug, tierName, quantity: String(quantity) } };
+        options = { 
+            amount, 
+            currency: "INR", 
+            receipt: `receipt_ws_${workshopId}_${Date.now()}`, 
+            notes: { 
+                type: 'workshop', 
+                eventCode: workshopSlug, 
+                tierName, 
+                quantity: String(quantity),
+                userName: userName,
+                userQuestion: userQuestion,
+            } 
+        };
       } else {
         return ctx.badRequest("Invalid request body.");
       }
+
       const order = await razorpay.orders.create(options);
       return order;
+
     } catch (error) {
       console.error("Error creating Razorpay order:", error);
       return ctx.internalServerError("Could not create order.");
@@ -63,7 +89,6 @@ module.exports = {
   },
 
   async verify(ctx) {
-    // ... (Signature verification logic remains the same) ...
     console.log("--- Universal verification endpoint reached ---");
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = ctx.request.body;
@@ -82,7 +107,7 @@ module.exports = {
       const paymentDetails = await razorpay.payments.fetch(razorpay_payment_id);
 
       const userEmail = paymentDetails.email;
-      const { type, eventCode, tierName, quantity: qtyString } = orderDetails.notes;
+      const { type, eventCode, tierName, quantity: qtyString, userName, userQuestion } = orderDetails.notes;
       const quantity = parseInt(qtyString, 10);
 
       if (!type || !eventCode || !userEmail || !tierName || !quantity) {
@@ -98,37 +123,31 @@ module.exports = {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
       if (type === 'event') {
-        // --- FINAL FIX: Explicitly populate both artistic_work and ticket_tiers ---
         const events = await strapi.entityService.findMany('api::event.event', { 
           filters: { uid: eventCode }, 
-          populate: {
-            artistic_work: {
-              populate: '*',
-            },
-            ticket_tiers: true, // Explicitly ask for the ticket tiers
-          } 
+          populate: { artistic_work: { populate: '*' } } 
         } as any);
         itemToUpdate = events?.[0];
-        
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          
-          const artisticWorkComponent = (itemToUpdate as any).artistic_work?.[0];
-          let eventName = 'Upcoming Performance';
-          if (artisticWorkComponent?.production?.title) {
-              eventName = artisticWorkComponent.production.title;
-          } else if (artisticWorkComponent?.solo?.title) {
-              eventName = artisticWorkComponent.solo.title;
-          }
-
-          emailParams = { eventName: eventName, eventDate: new Date(itemToUpdate.date).toLocaleString(), eventVenue: itemToUpdate.venue };
+          const artisticWork = (itemToUpdate as any).artistic_work?.[0];
+          emailParams = { 
+            eventName: artisticWork?.production?.title || artisticWork?.solo?.title, 
+            eventDate: new Date(itemToUpdate.date).toLocaleString(), 
+            eventVenue: itemToUpdate.venue 
+          };
         }
       } else if (type === 'workshop') {
         const workshops = await strapi.entityService.findMany('api::workshop.workshop', { filters: { slug: eventCode } as any, populate: '*' });
         itemToUpdate = workshops?.[0];
         if (itemToUpdate) {
           numericId = itemToUpdate.id;
-          emailParams = { eventName: itemToUpdate.title, eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, eventVenue: itemToUpdate.venue, schedule: (itemToUpdate as any).schedule };
+          emailParams = { 
+            eventName: itemToUpdate.title, 
+            eventDate: `${new Date(itemToUpdate.start_date).toLocaleDateString()} - ${new Date(itemToUpdate.end_date).toLocaleDateString()}`, 
+            eventVenue: itemToUpdate.venue, 
+            schedule: (itemToUpdate as any).schedule 
+          };
         }
       }
 
@@ -136,7 +155,7 @@ module.exports = {
         const tierIndex = (itemToUpdate as any).ticket_tiers.findIndex(t => t.name === tierName);
         if (tierIndex > -1) {
           const purchasedTier = (itemToUpdate as any).ticket_tiers[tierIndex];
-
+          
           if (purchasedTier.is_zoom_access){
             brevoTemplateId = 6;
             secureWatchLinks = (itemToUpdate as any).schedule.filter(s => s.zoom_link).map(s => ({ name: s.topic || `Session on ${new Date(s.date).toLocaleDateString()}`, url: s.zoom_link }));
@@ -187,15 +206,37 @@ module.exports = {
           tierName: tierName,
           quantity: quantity,
           watchLinks: secureWatchLinks,
+          userName: userName,
+          userQuestion: userQuestion
         });
 
-        const sendSmtpEmail = new Brevo.SendSmtpEmail();
-        sendSmtpEmail.to = [{ email: userEmail }];
-        sendSmtpEmail.sender = { email: 'info@divyanayardance.com', name: 'The Dakshina Dance Repertory' };
-        sendSmtpEmail.templateId = brevoTemplateId;
-        sendSmtpEmail.params = emailParams;
-        await brevoApi.sendTransacEmail(sendSmtpEmail);
-        console.log(`Ticket email sent successfully using template ID: ${brevoTemplateId}.`);
+        const customerEmail = new Brevo.SendSmtpEmail();
+        customerEmail.to = [{ email: userEmail }];
+        customerEmail.sender = { email: 'info@divyanayardance.com', name: 'The Dakshina Dance Repertory' };
+        customerEmail.templateId = brevoTemplateId;
+        customerEmail.params = emailParams;
+        await brevoApi.sendTransacEmail(customerEmail);
+        console.log(`Confirmation email sent to ${userEmail}.`);
+
+        if ((type === 'workshop' || type === 'event') && userQuestion) {
+            const inquiryEmail = new Brevo.SendSmtpEmail();
+            const companyEmail = 'inbatamilanhk10@gmail.com'; // IMPORTANT: Replace this
+            inquiryEmail.to = [{ email: companyEmail }];
+            inquiryEmail.sender = { email: 'nereply@divyanayardance.com', name: 'Workshop Registration' };
+            inquiryEmail.replyTo = { email: userEmail, name: userName };
+            inquiryEmail.subject = `New Question from Registrant: ${userName}`;
+            inquiryEmail.htmlContent = `
+                <p>A new participant has registered for "${itemToUpdate.title}" and submitted a question.</p>
+                <hr>
+                <p><strong>Participant Name:</strong> ${userName}</p>
+                <p><strong>Participant Email:</strong> ${userEmail}</p>
+                <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+                <p><strong>Question:</strong></p>
+                <p>${userQuestion}</p>
+            `;
+            await brevoApi.sendTransacEmail(inquiryEmail);
+            console.log(`Inquiry email sent to ${companyEmail}.`);
+        }
 
       } else {
         console.error(`CRITICAL: Could not find ${type} with code ${eventCode} after payment.`);
